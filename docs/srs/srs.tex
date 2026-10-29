@@ -1,0 +1,656 @@
+\chapter{Introduction}
+\label{ch:intro}
+
+\section{Purpose}
+This SRS specifies the requirements of the Campus Complaint \& Maintenance System, a web-based system that lets students, faculty members, and administrators report campus facility problems and lets maintenance staff handle them, so that every complaint is tracked from report to resolution. It is the basis for design, development, and testing.
+
+\section{Intended Audience}
+This SRS is written for the following readers:
+
+\begin{itemize}
+  \item \textbf{Developers}, who build the system from the requirements.
+  \item \textbf{Testers}, who write test cases from the confirmation part of each functional requirement.
+  \item \textbf{The project manager (team lead)}, who uses it to plan and track the work.
+  \item \textbf{The course instructor}, who evaluates the document.
+  \item \textbf{The university administration}, who is the buyer of the system and can adopt and sponsor it.
+\end{itemize}
+
+\section{Intended Use}
+\begin{itemize}
+  \item \textbf{Developers} build each functional requirement (FR-01 to FR-21) as written and follow the constraints (Section 2.4) and the non-functional requirements (Section 3.2). For example, FR-12 Confirmation 2 defines what happens when a second staff member tries to accept a complaint that is already assigned.
+  \item \textbf{Testers} write one test case from each Confirmation, because Given-When-Then maps directly to a test. For example, FR-02 Confirmation 3 is tested by entering a wrong password 5 times. They verify the non-functional requirements with the verification method given in Section 3.2.
+  \item \textbf{The project manager} uses the product scope (Section 1.4) and the list of functional requirements to plan and track tasks.
+  \item \textbf{The course instructor} checks that the SRS is complete and follows the SRS guideline.
+  \item \textbf{The university administration} checks that the user needs (Section 2.2) and the product scope (Section 1.4) match its expectations, and then decides whether to adopt and fund the system.
+\end{itemize}
+
+\section{Product Scope}
+The Campus Complaint \& Maintenance System is a web-based maintenance complaint management system for university campuses. It replaces in-person visits and informal reporting with one system where students, faculty members, and administrators report facility problems (broken fans, leaking taps, faulty wiring, damaged furniture), maintenance staff handle them, supervisors monitor delays, and the administration reviews complaint data to plan maintenance spending. It runs in a browser on desktop, tablet, or mobile, with no separate app to install. The system is developed as a course project within the semester schedule.
+
+\textbf{What the system will do}
+
+\begin{itemize}
+  \item Register only verified campus members using their IUB ID number and an OTP, and give each user the role stored in the university records (Student, Faculty Member, Maintenance Staff, Maintenance Supervisor, University Administration).
+  \item Control access by role, with login by IUB ID number and password, log out, password reset with an OTP, and an account lock after repeated failed login attempts.
+  \item Let students, faculty members, and administrators submit complaints with a category, location, description, and optional photo, track the status of their own and followed complaints (Open, In Progress, Resolved, Rejected), and reopen a Resolved complaint within a limited time.
+  \item Let users browse the existing Open and In Progress complaints (category, location, and status only), and follow one instead of creating a duplicate.
+  \item Let students, faculty members, and administrators flag Safety Hazards, which appear at the top of the staff list.
+  \item Let staff filter complaints, accept one so no one else duplicates the work, mark it Resolved or reject it if it is invalid or out of scope (supervisors can do both for any complaint), and view previous complaints from the same location.
+  \item Show each user their on-screen notifications in one place, and notify the person who submitted a complaint when it is Resolved or Rejected.
+  \item Notify the supervisor and mark a complaint Overdue if it stays Open for too long.
+  \item Alert the supervisor by email or SMS when a Safety Hazard is reported.
+  \item Let supervisors see all complaints with their assigned staff and assign an Open or In Progress complaint to a maintenance staff member.
+  \item Give the administration reports on complaints and average resolution time per category, and complaint counts per building and category.
+\end{itemize}
+
+\textbf{Out of scope}
+
+\begin{itemize}
+  \item It is not an emergency service and does not replace contacting campus security.
+  \item It does not manage inventory, procurement, budgets, or staff schedules.
+  \item It does not create or edit university records (IDs, roles, contact details).
+  \item It does not provide chat between users, automatic assignment of complaints, or a native mobile app.
+  \item It does not provide access for visitors or guests without an IUB ID.
+  \item It does not let users delete notifications, and notifications do not expire.
+\end{itemize}
+
+\textbf{Objectives and goals}
+
+\begin{itemize}
+  \item Remove the need to visit the maintenance office to report a problem or ask about its progress.
+  \item Reduce duplicate reports and duplicate work.
+  \item Make sure dangerous problems are seen first.
+  \item Alert the supervisor when a complaint waits too long without being taken.
+  \item Give users clear status updates.
+  \item Help the administration decide where to spend the maintenance budget using real complaint data.
+  \item Protect privacy: users can see the details of only their own complaints.
+\end{itemize}
+
+\textbf{Relation to university goals}
+
+The system supports a safe, well-maintained campus and efficient use of maintenance resources. For readers outside the development team, it turns scattered complaints into a traceable record of who reported what, who handled it, how long it took, and where problems keep recurring.
+
+\section{Risk Definition}
+\begin{description}
+  \item[Risk 1: Leak of personal data] The system holds IUB ID numbers, contact details, complaint descriptions, and photos. If unauthorized people access them, users' privacy is lost and trust in the system is damaged. \textit{Addressed by:} FR-02, FR-03, FR-07 and FR-09 (access, privacy and log out rules) and the security requirements in Section 3.2.
+  \item[Risk 2: A safety hazard is not seen in time] If a dangerous problem stays unnoticed, a person may be injured. \textit{Addressed by:} FR-05, FR-08, FR-11, FR-15, and the safety requirement in Section 3.2.
+  \item[Risk 3: Eligible users cannot register] Users without an IUB record or a registered email or mobile number (for example new students or contract staff) cannot use the system, so problems may go unreported. \textit{Addressed by:} FR-01 Confirmation 4 and 7 (clear messages) and Assumptions 1 and 3 in Section 2.5.
+\end{description}
+
+\chapter{Overall Description}
+\label{Overall Description}
+
+\section{User Classes and Characteristics}
+Primary users use the system regularly. Secondary users use it occasionally or benefit from it indirectly. A buyer decides whether the product is adopted and may not use it daily. Registration (FR-01), login (FR-02), log out (FR-03) and password reset (FR-04) apply to all user classes. A complainant is a student, faculty member, or administrator who submits a complaint. A maintenance supervisor can see everything that maintenance staff can see.
+
+\subsubsection*{Student (Primary user)}
+
+\begin{description}
+  \item[Description] Students of the university who report campus problems such as electrical, plumbing, or IT faults and follow their progress.
+  \item[Frequency of use] Frequent. Submits a complaint whenever a problem appears and checks its status regularly.
+  \item[Technical expertise] Basic to moderate. Comfortable with common mobile and web applications.
+  \item[Access device] Mostly smartphone, sometimes laptop.
+  \item[Main goals] Report a problem without visiting the maintenance office, avoid duplicate reports, track the status, and reopen a complaint when the fix did not work.
+  \item[Related functional requirements] FR-05, FR-06 to FR-10, FR-21
+\end{description}
+
+\subsubsection*{Faculty Member (Primary user)}
+
+\begin{description}
+  \item[Description] Faculty members of the university who report problems in their offices, labs, and classrooms and follow their progress.
+  \item[Frequency of use] Occasional. Submits a complaint when a problem appears and checks its status.
+  \item[Technical expertise] Moderate. Comfortable with common web applications.
+  \item[Access device] Desktop or laptop computer in the office, sometimes a smartphone.
+  \item[Main goals] Report a problem without visiting the maintenance office, avoid duplicate reports, track the status, and reopen a complaint when the fix did not work.
+  \item[Related functional requirements] FR-05, FR-06 to FR-10, FR-21
+\end{description}
+
+\subsubsection*{Maintenance Staff (Primary user)}
+
+\begin{description}
+  \item[Description] Technicians who receive complaints, repair the problems, and mark them as Resolved.
+  \item[Frequency of use] Daily. Reviews the complaint list and updates complaints throughout the working day.
+  \item[Technical expertise] Basic. Needs a simple interface with few steps.
+  \item[Access device] Smartphone while on site, desktop computer in the maintenance office.
+  \item[Main goals] Find complaints that need attention first, accept work without duplication, resolve or reject complaints, and review the history of a location.
+  \item[Related functional requirements] FR-05, FR-11 to FR-14, FR-20
+\end{description}
+
+\subsubsection*{Maintenance Supervisor (Primary user)}
+
+\begin{description}
+  \item[Description] Staff who oversee the maintenance team and make sure complaints do not wait too long.
+  \item[Frequency of use] Regular. Monitors complaints at least once a day.
+  \item[Technical expertise] Moderate.
+  \item[Access device] Desktop computer or smartphone.
+  \item[Main goals] Be alerted when a complaint stays Open too long, tell overdue complaints apart from those already being worked on, hand over or resolve work when a staff member is unavailable, and close invalid complaints.
+  \item[Related functional requirements] FR-05, FR-08, FR-11, FR-13, FR-14, FR-15 to FR-17, FR-20
+\end{description}
+
+\subsubsection*{University Administration (Secondary user and Buyer)}
+
+\begin{description}
+  \item[Description] The university office that decides to adopt and fund the system and uses its reports to plan maintenance spending. It is a buyer of the product and uses the system only occasionally. It may also submit complaints like a student.
+  \item[Frequency of use] Occasional. Generates reports for a chosen period and submits a complaint when a problem appears.
+  \item[Technical expertise] Moderate.
+  \item[Access device] Mostly desktop computer.
+  \item[Main goals] Decide where to spend the maintenance budget and identify buildings that need permanent repairs.
+  \item[Related functional requirements] FR-05, FR-06 to FR-10, FR-18, FR-19, FR-21
+\end{description}
+
+\section{User Needs}
+The needs below describe what each user class must be able to achieve. Each need is traced to the functional requirements (FR, Section 3.1) that satisfy it.
+
+\subsubsection*{All users (Student, Faculty Member, Maintenance Staff, Maintenance Supervisor, University Administration)}
+
+\begin{itemize}
+  \item needs to be sure that only verified university members can use the system \textit{(FR-01)}
+  \item needs to access only what matches their role \textit{(FR-02)}
+  \item needs to leave the system without exposing their account on a shared device \textit{(FR-03)}
+  \item needs to regain access when they forget their password \textit{(FR-04)}
+\end{itemize}
+
+\subsubsection*{Complainants (Student, Faculty Member, University Administration)}
+
+\begin{itemize}
+  \item needs to report a problem without visiting the maintenance office \textit{(FR-06)}
+  \item needs to see what has already been reported before writing a new complaint \textit{(FR-21)}
+  \item needs to avoid reporting a problem that someone else has already reported \textit{(FR-07, FR-21)}
+  \item needs to alert maintenance staff quickly about a dangerous problem \textit{(FR-08)}
+  \item needs to know whether the problem is being fixed \textit{(FR-09, FR-13)}
+  \item needs to be told when a complaint they care about is Resolved or Rejected \textit{(FR-05, FR-07, FR-13, FR-20)}
+  \item needs to stop following a complaint they no longer care about \textit{(FR-07, FR-09)}
+  \item needs to get a problem looked at again when the fix did not work \textit{(FR-10)}
+  \item needs to be sure that other people cannot see the details of their complaints \textit{(FR-09)}
+\end{itemize}
+
+\subsubsection*{Maintenance Staff}
+
+\begin{itemize}
+  \item needs to know what the problem is and exactly where it is before going to fix it \textit{(FR-06)}
+  \item needs to deal with each problem once instead of handling repeated reports of it \textit{(FR-07)}
+  \item needs to attend to dangerous problems before ordinary ones \textit{(FR-08, FR-11)}
+  \item needs to be told when a dangerous problem needs attention \textit{(FR-05, FR-08)}
+  \item needs to quickly find the complaints that need their attention first \textit{(FR-11)}
+  \item needs to avoid doing work that another staff member has already taken \textit{(FR-12)}
+  \item needs to let the person who reported it know when a problem is fixed \textit{(FR-13)}
+  \item needs to close complaints that are invalid or out of scope instead of leaving them open \textit{(FR-20)}
+  \item needs to learn why a complainant says a fix did not work \textit{(FR-10)}
+  \item needs to recognize recurring problems at a location so their cause can be investigated \textit{(FR-14)}
+\end{itemize}
+
+\subsubsection*{Maintenance Supervisor}
+
+\begin{itemize}
+  \item needs to be told at once when a dangerous problem is reported \textit{(FR-05, FR-08)}
+  \item needs to make sure that no complaint is left waiting without anyone taking it \textit{(FR-05, FR-15)}
+  \item needs to tell overdue complaints apart from the ones already being worked on \textit{(FR-15, FR-16)}
+  \item needs to see how the team's work is spread across staff members \textit{(FR-16)}
+  \item needs to quickly find the complaints that need attention first \textit{(FR-11)}
+  \item needs to recognize recurring problems at a location so their cause can be investigated \textit{(FR-14)}
+  \item needs to give a complaint to a staff member when no one has taken it or the assigned staff member is unavailable \textit{(FR-13, FR-17)}
+  \item needs to close invalid or out-of-scope complaints so that they do not stay open \textit{(FR-20)}
+\end{itemize}
+
+\subsubsection*{University Administration}
+
+\begin{itemize}
+  \item needs to decide where to spend the maintenance budget based on actual complaint data \textit{(FR-18)}
+  \item needs to know which kinds of problems take the longest to fix \textit{(FR-18)}
+  \item needs to identify buildings and problem types that need permanent repairs instead of repeated fixes \textit{(FR-19)}
+\end{itemize}
+
+\section{Operating Environment}
+\begin{itemize}
+  \item \textbf{Access:} The system is a web application used through a web browser. No app needs to be installed.
+  \item \textbf{Devices and operating systems:} Smartphones and tablets (Android, iOS) and desktop or laptop computers (Windows, macOS, Linux).
+  \item \textbf{Browsers:} The latest two versions of Google Chrome, Microsoft Edge, Mozilla Firefox, and Apple Safari.
+  \item \textbf{Network:} Requires an internet or campus network connection. There is no offline mode.
+  \item \textbf{Server side:} A web server and a relational database that store users, complaints, and uploaded photos. The hosting platform will be decided during the design phase.
+  \item \textbf{External interfaces:} The IUB university records (ID number, role, email, mobile number) and a message delivery service (email or SMS) for sending one-time passwords (OTP) and Safety Hazard alerts.
+\end{itemize}
+
+\section{Constraints}
+\begin{enumerate}
+  \item The system is developed as a course project by a team of four students within the semester schedule.
+  \item User accounts, roles, and contact details come from the IUB university records. The system cannot create or edit them.
+  \item Sending OTPs and Safety Hazard alerts depends on an external message delivery service (email or SMS).
+  \item The system is web-based only. There is no native mobile app.
+  \item The solution must follow the course requirements: an architectural pattern, unit tests, and Nielsen's usability heuristics for the user interface.
+\end{enumerate}
+
+\section{Assumptions}
+\begin{enumerate}
+  \item The IUB records (ID number, role, email, mobile number) are accurate and available to the system, and include faculty members and administrators. \textit{If false: users cannot register or receive the wrong role.}
+  \item Every user has an internet-connected device with a supported browser. \textit{If false: they cannot use the system.}
+  \item Every user has at least one registered email address or mobile number for receiving the OTP. \textit{If false: they cannot complete registration (FR-01) or reset a password (FR-04).}
+  \item The university provides a standard list of buildings, floors, rooms or areas, and complaint categories, which is loaded into the system before use. Users select a location from this list. \textit{If false: duplicate detection (FR-07) and location history (FR-14) become unreliable.}
+  \item Maintenance staff check the complaint list during working hours. \textit{If false: complaints stay Open and trigger overdue alerts (FR-15).}
+\end{enumerate}
+
+\newpage
+
+
+
+\chapter{Requirements}
+\label{Requirements}
+
+\section{Functional Requirements}
+Functional requirements are written as user stories, each with a confirmation part.
+
+\subsubsection*{All users}
+
+\noindent\textbf{FR-01: Register account}\par\nopagebreak[4]\smallskip
+\noindent\textbf{User Story}\par\nopagebreak[4]
+\noindent As an IUB community member (student, faculty member, maintenance staff, supervisor, or administrator), I want to register an account using my IUB ID number, so that only verified university members can use the system and each person automatically gets the permissions of their role.\par\smallskip
+\noindent\textit{The IUB ID number is the identification number issued by the university. It is not an email address. The one-time password is sent to the email address or mobile number registered for that ID in the university records.}\par\smallskip
+{\makeatletter
+\@beginparpenalty=10000
+\makeatother
+\noindent\textbf{Confirmation}\par\nopagebreak[4]\vspace{-6pt}\nopagebreak[4]
+\begin{enumerate}\setlength{\itemsep}{2pt}\setlength{\parsep}{0pt}\setlength{\topsep}{2pt}\setlength{\partopsep}{0pt}
+  \item \textbf{Given} I am not registered and my IUB ID number exists in the university records, \textbf{When} I enter my IUB ID number and a password and submit, \textbf{Then} the system sends a one-time password (OTP) to my registered university email or, if no email is on record, to my registered mobile number.
+  \item \textbf{Given} I received the OTP, \textbf{When} I enter the correct OTP within 5 minutes, \textbf{Then} my account is activated with the role stored in the university records and I can log in.
+  \item \textbf{Given} I enter a wrong OTP, \textbf{When} I submit, \textbf{Then} the system rejects it and lets me enter the OTP again.
+  \item \textbf{Given} I have entered a wrong OTP 3 times for the same OTP, \textbf{When} I submit the third wrong OTP, \textbf{Then} the system marks that OTP invalid and I must request a new OTP.
+  \item \textbf{Given} I enter an expired OTP, \textbf{When} I submit, \textbf{Then} the system rejects it and lets me request a new OTP.
+  \item \textbf{Given} I have a valid OTP, \textbf{When} I request a new OTP, \textbf{Then} the system cancels the earlier OTP immediately and sends the new one, so that only one OTP is valid at a time.
+  \item \textbf{Given} my IUB ID number is not in the university records, \textbf{When} I try to register, \textbf{Then} the system rejects the request and displays ``IUB ID number not found. Please contact the university administration.''
+  \item \textbf{Given} an IUB ID number is already registered and activated, \textbf{When} I try to register with it again, \textbf{Then} the system rejects the request and displays ``This ID is already registered.''
+  \item \textbf{Given} I enter a password shorter than 8 characters, \textbf{When} I submit, \textbf{Then} the system rejects it and displays ``Password must be at least 8 characters.''
+  \item \textbf{Given} my IUB ID number exists in the university records but has no registered email or mobile number, \textbf{When} I try to register, \textbf{Then} the system rejects the request and displays ``No contact details are registered for this ID. Please contact the university administration.''
+  \item \textbf{Given} I have requested a new OTP 5 times in 15 minutes, \textbf{When} I request another OTP, \textbf{Then} the system rejects the request and displays ``Too many requests. Please try again in 15 minutes.''
+  \item \textbf{Given} my account is waiting for activation, \textbf{When} I register again with my IUB ID number and a new password, \textbf{Then} the system sends a new OTP and replaces my earlier password with the new one.
+\end{enumerate}}
+\medskip
+ 
+\noindent\textbf{FR-02: Log in}\par\nopagebreak[4]\smallskip
+\noindent\textbf{User Story}\par\nopagebreak[4]
+\noindent As a registered user (student, faculty member, maintenance staff, supervisor, or administrator), I want to log in with my IUB ID number and password, so that the system knows who I am and shows only the complaints and actions I am allowed to use.\par\smallskip
+{\makeatletter
+\@beginparpenalty=10000
+\makeatother
+\noindent\textbf{Confirmation}\par\nopagebreak[4]\vspace{-6pt}\nopagebreak[4]
+\begin{enumerate}\setlength{\itemsep}{2pt}\setlength{\parsep}{0pt}\setlength{\topsep}{2pt}\setlength{\partopsep}{0pt}
+  \item \textbf{Given} I have a registered account, \textbf{When} I enter my correct IUB ID number and password, \textbf{Then} I am logged in and see the home page for my role.
+  \item \textbf{Given} I have a registered account, \textbf{When} I enter a wrong password, \textbf{Then} the system rejects the login and displays ``Invalid ID or password'', without saying which one is wrong.
+  \item \textbf{Given} I have entered a wrong password 5 times in a row, \textbf{When} I try again, \textbf{Then} the system locks my account for 15 minutes.
+  \item \textbf{Given} I am logged in, \textbf{When} I try to open a page that my role is not allowed to use, \textbf{Then} the system denies access and displays ``You are not authorized to view this page.''
+  \item \textbf{Given} my account is locked, \textbf{When} I enter my IUB ID number and the correct password, \textbf{Then} the system rejects the login and displays ``Your account is locked. Please try again later.''
+  \item \textbf{Given} my account was locked 15 minutes ago, \textbf{When} I enter my correct IUB ID number and password, \textbf{Then} I am logged in and see the home page for my role.
+\end{enumerate}}
+\medskip
+ 
+\noindent\textbf{FR-03: Log out}\par\nopagebreak[4]\smallskip
+\noindent\textbf{User Story}\par\nopagebreak[4]
+\noindent As a logged-in user (student, faculty member, maintenance staff, supervisor, or administrator), I want to log out, so that nobody else using the same device can see or change my information.\par\smallskip
+{\makeatletter
+\@beginparpenalty=10000
+\makeatother
+\noindent\textbf{Confirmation}\par\nopagebreak[4]\vspace{-6pt}\nopagebreak[4]
+\begin{enumerate}\setlength{\itemsep}{2pt}\setlength{\parsep}{0pt}\setlength{\topsep}{2pt}\setlength{\partopsep}{0pt}
+  \item \textbf{Given} I am logged in, \textbf{When} I choose Log out, \textbf{Then} my session ends and the login page is shown.
+  \item \textbf{Given} I have logged out, \textbf{When} I use the browser's back button or open the address of a protected page, \textbf{Then} the system does not show the page and asks me to log in first.
+  \item \textbf{Given} I have been inactive for 15 minutes, \textbf{When} I try to continue, \textbf{Then} the system ends my session, shows the login page, and displays ``Your session has expired. Please log in again.''
+\end{enumerate}}
+\medskip
+ 
+\noindent\textbf{FR-04: Reset password}\par\nopagebreak[4]\smallskip
+\noindent\textbf{User Story}\par\nopagebreak[4]
+\noindent As a registered user (student, faculty member, maintenance staff, supervisor, or administrator), I want to reset a forgotten password using a one-time password sent to my registered contact, so that I can regain access to my account on my own, and no one else can reset my password without access to my registered email or mobile number.\par\smallskip
+{\makeatletter
+\@beginparpenalty=10000
+\makeatother
+\noindent\textbf{Confirmation}\par\nopagebreak[4]\vspace{-6pt}\nopagebreak[4]
+\begin{enumerate}\setlength{\itemsep}{2pt}\setlength{\parsep}{0pt}\setlength{\topsep}{2pt}\setlength{\partopsep}{0pt}
+  \item \textbf{Given} I have a registered account, \textbf{When} I choose Forgot password and enter my IUB ID number, \textbf{Then} the system sends a one-time password (OTP) to my registered university email or, if no email is on record, to my registered mobile number.
+  \item \textbf{Given} I received the OTP, \textbf{When} I enter the correct OTP within 5 minutes and a new password of at least 8 characters, \textbf{Then} my password is changed and I can log in with it.
+  \item \textbf{Given} I enter a wrong OTP, \textbf{When} I submit, \textbf{Then} the system rejects it and lets me enter the OTP again.
+  \item \textbf{Given} I have entered a wrong OTP 3 times for the same OTP, \textbf{When} I submit the third wrong OTP, \textbf{Then} the system marks that OTP invalid and I must request a new OTP.
+  \item \textbf{Given} I enter an expired OTP, \textbf{When} I submit, \textbf{Then} the system rejects it and lets me request a new OTP.
+  \item \textbf{Given} I have a valid OTP, \textbf{When} I request a new OTP, \textbf{Then} the system cancels the earlier OTP immediately and sends the new one, so that only one OTP is valid at a time.
+  \item \textbf{Given} my password was changed, \textbf{When} I try to log in with the old password, \textbf{Then} the system rejects the login.
+  \item \textbf{Given} I enter an IUB ID number that is not registered, \textbf{When} I ask for a password reset, \textbf{Then} the system displays ``If this ID is registered, a one-time password has been sent.''
+  \item \textbf{Given} I received the OTP, \textbf{When} I enter the correct OTP and a new password shorter than 8 characters, \textbf{Then} the system rejects it and displays ``Password must be at least 8 characters.''
+  \item \textbf{Given} I have requested a new OTP 5 times in 15 minutes, \textbf{When} I request another OTP, \textbf{Then} the system rejects the request and displays ``Too many requests. Please try again in 15 minutes.''
+  \item \textbf{Given} my account is locked, \textbf{When} I ask for a password reset, \textbf{Then} the system rejects the request and displays ``Your account is locked. Please try again later.''
+\end{enumerate}}
+\medskip
+ 
+\noindent\textbf{FR-05: View notifications}\par\nopagebreak[4]\smallskip
+\noindent\textbf{User Story}\par\nopagebreak[4]
+\noindent As a registered user, I want to see my on-screen notifications in one place, so that I do not miss updates on complaints that matter to me.\par\smallskip
+{\makeatletter
+\@beginparpenalty=10000
+\makeatother
+\noindent\textbf{Confirmation}\par\nopagebreak[4]\vspace{-6pt}\nopagebreak[4]
+\begin{enumerate}\setlength{\itemsep}{2pt}\setlength{\parsep}{0pt}\setlength{\topsep}{2pt}\setlength{\partopsep}{0pt}
+  \item \textbf{Given} I have received notifications, \textbf{When} I open Notifications, \textbf{Then} they are listed newest first and the unread ones are marked.
+  \item \textbf{Given} I have an unread notification, \textbf{When} I open it, \textbf{Then} it is marked as read and I am taken to the related complaint.
+  \item \textbf{Given} I have unread notifications, \textbf{When} I am logged in, \textbf{Then} the number of unread notifications is shown next to the Notifications link.
+  \item \textbf{Given} I have no notifications, \textbf{When} I open Notifications, \textbf{Then} the system displays ``You have no notifications.''
+\end{enumerate}}
+\medskip
+ 
+\subsubsection*{Complainants (Student, Faculty Member, University Administration)}
+
+\noindent\textbf{FR-06: Submit complaint}\par\nopagebreak[4]\smallskip
+\noindent\textbf{User Story}\par\nopagebreak[4]
+\noindent As a complainant (student, faculty member, or administrator), I want to submit a complaint with a category, a location, and a short description, so that the right maintenance team can find and fix the problem without me contacting them in person.\par\smallskip
+{\makeatletter
+\@beginparpenalty=10000
+\makeatother
+\noindent\textbf{Confirmation}\par\nopagebreak[4]\vspace{-6pt}\nopagebreak[4]
+\begin{enumerate}\setlength{\itemsep}{2pt}\setlength{\parsep}{0pt}\setlength{\topsep}{2pt}\setlength{\partopsep}{0pt}
+  \item \textbf{Given} I am logged in, \textbf{When} I select a category, select a location from the list (building, floor, room or area), add a description, and submit, \textbf{Then} the complaint is saved with status Open and I see a confirmation message with a unique complaint ID.
+  \item \textbf{Given} I am filling in the form, \textbf{When} I attach a photo, \textbf{Then} the photo is saved with the complaint and visible to maintenance staff and supervisors.
+  \item \textbf{Given} I am filling in the form, \textbf{When} I submit without a category or location, \textbf{Then} the complaint is not saved and the missing fields are highlighted.
+  \item \textbf{Given} I am not logged in, \textbf{When} I try to open the form, \textbf{Then} the system asks me to log in first.
+  \item \textbf{Given} I am filling in the form, \textbf{When} I attach a file that is not a JPG or PNG image or is larger than 5 MB, \textbf{Then} the system rejects the file and displays ``Photo must be a JPG or PNG file of up to 5 MB.''
+\end{enumerate}}
+\medskip
+ 
+\noindent\textbf{FR-07: Duplicate detection}\par\nopagebreak[4]\smallskip
+\noindent\textbf{User Story}\par\nopagebreak[4]
+\noindent As a complainant (student, faculty member, or administrator), I want to see existing Open or In Progress complaints for the same location and category before I submit, so that I do not waste time on a problem already reported and staff are not flooded with duplicates.\par\smallskip
+{\makeatletter
+\@beginparpenalty=10000
+\makeatother
+\noindent\textbf{Confirmation}\par\nopagebreak[4]\vspace{-6pt}\nopagebreak[4]
+\begin{enumerate}\setlength{\itemsep}{2pt}\setlength{\parsep}{0pt}\setlength{\topsep}{2pt}\setlength{\partopsep}{0pt}
+  \item \textbf{Given} I am submitting a complaint, \textbf{When} I have selected both a category and a location, or I change either of them, \textbf{Then} the system shows every Open or In Progress complaint with the same category and the same location (see the location rule in FR-14) before I submit.
+  \item \textbf{Given} a matching complaint is shown, \textbf{When} I choose to follow it, \textbf{Then} I receive an on-screen notification when it is marked Resolved or Rejected, and no new complaint is created.
+  \item \textbf{Given} no Open or In Progress complaint matches, \textbf{When} I submit, \textbf{Then} the system accepts my complaint as normal.
+  \item \textbf{Given} an existing complaint is shown to me, \textbf{When} the system displays it, \textbf{Then} it shows only the category, location, and status, not the reporter's name or description.
+  \item \textbf{Given} I am following a complaint, \textbf{When} I choose to stop following it, \textbf{Then} I no longer receive notifications about it.
+  \item \textbf{Given} matching complaints are shown, \textbf{When} I submit my complaint without following any of them, \textbf{Then} the system accepts it as a new complaint.
+\end{enumerate}}
+\medskip
+ 
+\noindent\textbf{FR-08: Flag safety hazard}\par\nopagebreak[4]\smallskip
+\noindent\textbf{User Story}\par\nopagebreak[4]
+\noindent As a complainant (student, faculty member, or administrator), I want to flag a complaint as a safety hazard, so that dangerous problems reach maintenance staff before someone gets hurt.\par\smallskip
+{\makeatletter
+\@beginparpenalty=10000
+\makeatother
+\noindent\textbf{Confirmation}\par\nopagebreak[4]\vspace{-6pt}\nopagebreak[4]
+\begin{enumerate}\setlength{\itemsep}{2pt}\setlength{\parsep}{0pt}\setlength{\topsep}{2pt}\setlength{\partopsep}{0pt}
+  \item \textbf{Given} I am submitting a complaint, \textbf{When} I tick ``Safety Hazard'' and submit, \textbf{Then} the complaint is saved as Open with a Safety Hazard flag.
+  \item \textbf{Given} a complaint is flagged, \textbf{When} it is submitted, \textbf{Then} maintenance staff and supervisors receive an on-screen notification.
+  \item \textbf{Given} a complaint is flagged, \textbf{When} it is submitted, \textbf{Then} each maintenance supervisor also receives an email or SMS message at their registered email address or mobile number.
+  \item \textbf{Given} a complaint is flagged, \textbf{When} the notification or the email or SMS message cannot be delivered, \textbf{Then} the complaint is still saved as Open with the Safety Hazard flag and appears at the top of the staff and supervisor lists.
+\end{enumerate}}
+\medskip
+ 
+\noindent\textbf{FR-09: Track complaint status}\par\nopagebreak[4]\smallskip
+\noindent\textbf{User Story}\par\nopagebreak[4]
+\noindent As a complainant (student, faculty member, or administrator), I want to view the current status of my own complaints and the complaints I follow, so that I know whether work has started and do not need to visit the maintenance office to ask.\par\smallskip
+{\makeatletter
+\@beginparpenalty=10000
+\makeatother
+\noindent\textbf{Confirmation}\par\nopagebreak[4]\vspace{-6pt}\nopagebreak[4]
+\begin{enumerate}\setlength{\itemsep}{2pt}\setlength{\parsep}{0pt}\setlength{\topsep}{2pt}\setlength{\partopsep}{0pt}
+  \item \textbf{Given} I have submitted a complaint, \textbf{When} I open My Complaints, \textbf{Then} I see its status (Open, In Progress, Resolved, or Rejected), the date and time of the last status change, and the reason if it is Rejected.
+  \item \textbf{Given} staff changes my complaint's status, \textbf{When} I open My Complaints again, \textbf{Then} the new status is displayed.
+  \item \textbf{Given} I have not submitted or followed any complaint, \textbf{When} I open My Complaints, \textbf{Then} the system displays ``You have no complaints to show.''
+  \item \textbf{Given} a complaint belongs to another user, \textbf{When} I try to open its details, \textbf{Then} the system denies access and displays ``You are not allowed to view this complaint.''
+  \item \textbf{Given} I am following a complaint submitted by another user, \textbf{When} I open My Complaints, \textbf{Then} it is listed under Following with only its category, location, status, and the date and time of the last status change, and I can stop following it.
+  \item \textbf{Given} I have submitted a complaint, \textbf{When} I open it from My Complaints, \textbf{Then} I see its category, location, description, photo (if one was attached), status, and the reason if it is Rejected.
+\end{enumerate}}
+\medskip
+ 
+\noindent\textbf{FR-10: Reopen a Resolved complaint}\par\nopagebreak[4]\smallskip
+\noindent\textbf{User Story}\par\nopagebreak[4]
+\noindent As a complainant (student, faculty member, or administrator), I want to reopen a Resolved complaint with a reason, so that a problem that was not really fixed gets attention again without me submitting a new complaint.\par\smallskip
+{\makeatletter
+\@beginparpenalty=10000
+\makeatother
+\noindent\textbf{Confirmation}\par\nopagebreak[4]\vspace{-6pt}\nopagebreak[4]
+\begin{enumerate}\setlength{\itemsep}{2pt}\setlength{\parsep}{0pt}\setlength{\topsep}{2pt}\setlength{\partopsep}{0pt}
+  \item \textbf{Given} my complaint is Resolved, \textbf{When} I reopen it and enter a short reason, \textbf{Then} its status changes to Open, its previous assignment is cleared, and maintenance staff and supervisors can see my reason.
+  \item \textbf{Given} my complaint is Open, In Progress, or Rejected, \textbf{When} I try to reopen it, \textbf{Then} the system rejects the action and displays ``Only Resolved complaints can be reopened.''
+  \item \textbf{Given} my complaint was marked Resolved more than 7 days ago, \textbf{When} I try to reopen it, \textbf{Then} the system rejects the action and asks me to submit a new complaint.
+  \item \textbf{Given} I am reopening a complaint, \textbf{When} I submit without a reason, \textbf{Then} the complaint is not reopened and the system displays ``Please enter a reason.''
+\end{enumerate}}
+\medskip
+ 
+\noindent\textbf{FR-21: Browse existing complaints}\par\nopagebreak[4]\smallskip
+\noindent\textbf{User Story}\par\nopagebreak[4]
+\noindent As a complainant (student, faculty member, or administrator), I want to browse the existing Open and In Progress complaints before I write a new one, so that I can see what has already been reported and avoid duplicates.\par\smallskip
+{\makeatletter
+\@beginparpenalty=10000
+\makeatother
+\noindent\textbf{Confirmation}\par\nopagebreak[4]\vspace{-6pt}\nopagebreak[4]
+\begin{enumerate}\setlength{\itemsep}{2pt}\setlength{\parsep}{0pt}\setlength{\topsep}{2pt}\setlength{\partopsep}{0pt}
+  \item \textbf{Given} I am logged in, \textbf{When} I open Existing Complaints, \textbf{Then} I see each Open or In Progress complaint's category, location, status, and date submitted.
+  \item \textbf{Given} Existing Complaints is open, \textbf{When} I filter by building, category, or status, \textbf{Then} only matching complaints are shown.
+  \item \textbf{Given} Existing Complaints is open, \textbf{When} I view an entry, \textbf{Then} it does not show the reporter's name, the description, or any photo.
+  \item \textbf{Given} I see a complaint that matches my problem, \textbf{When} I choose to follow it, \textbf{Then} the follow works as described in FR-07 Confirmation 2.
+  \item \textbf{Given} Existing Complaints is open, \textbf{When} I apply filters that match no complaint, \textbf{Then} the system displays ``No complaints match your filters.''
+\end{enumerate}}
+\medskip
+ 
+\subsubsection*{Maintenance Staff}
+
+\noindent\textbf{FR-11: Filter complaint list}\par\nopagebreak[4]\smallskip
+\noindent\textbf{User Story}\par\nopagebreak[4]
+\noindent As a maintenance staff member or maintenance supervisor, I want to filter the complaint list by status, category, location, and safety hazard, so that I can quickly find the complaints that need my attention first.\par\smallskip
+{\makeatletter
+\@beginparpenalty=10000
+\makeatother
+\noindent\textbf{Confirmation}\par\nopagebreak[4]\vspace{-6pt}\nopagebreak[4]
+\begin{enumerate}\setlength{\itemsep}{2pt}\setlength{\parsep}{0pt}\setlength{\topsep}{2pt}\setlength{\partopsep}{0pt}
+  \item \textbf{Given} I am logged in as maintenance staff or as a supervisor, \textbf{When} I open the complaint list, \textbf{Then} I see each complaint's ID, category, location, status, and submission date, with Safety Hazard complaints at the top.
+  \item \textbf{Given} the complaint list is open, \textbf{When} I select one or more filters (status, category, location), \textbf{Then} only complaints matching all selected filters are shown.
+  \item \textbf{Given} the complaint list is open, \textbf{When} I filter by ``Safety Hazard'', \textbf{Then} only flagged complaints are shown.
+  \item \textbf{Given} the complaint list is open, \textbf{When} I apply filters that match no complaint, \textbf{Then} the system displays ``No complaints match your filters.''
+\end{enumerate}}
+\medskip
+ 
+\noindent\textbf{FR-12: Accept complaint}\par\nopagebreak[4]\smallskip
+\noindent\textbf{User Story}\par\nopagebreak[4]
+\noindent As a maintenance staff member, I want to accept an Open complaint, so that no other staff member duplicates the work and the complainant can see that work has started.\par\smallskip
+{\makeatletter
+\@beginparpenalty=10000
+\makeatother
+\noindent\textbf{Confirmation}\par\nopagebreak[4]\vspace{-6pt}\nopagebreak[4]
+\begin{enumerate}\setlength{\itemsep}{2pt}\setlength{\parsep}{0pt}\setlength{\topsep}{2pt}\setlength{\partopsep}{0pt}
+  \item \textbf{Given} a complaint is Open and unassigned, \textbf{When} I accept it, \textbf{Then} its status changes to In Progress and it is assigned to me.
+  \item \textbf{Given} a complaint is In Progress and assigned to another staff member, \textbf{When} I try to accept it, \textbf{Then} the system rejects the action, displays ``Complaint already assigned'', and the assignment stays unchanged.
+  \item \textbf{Given} a complaint is Resolved or Rejected, \textbf{When} I try to accept it, \textbf{Then} the system rejects the action and displays ``Only Open complaints can be accepted.''
+\end{enumerate}}
+\medskip
+ 
+\noindent\textbf{FR-13: Mark complaint as Resolved}\par\nopagebreak[4]\smallskip
+\noindent\textbf{User Story}\par\nopagebreak[4]
+\noindent As a maintenance staff member or maintenance supervisor, I want to mark an In Progress complaint as Resolved, so that the person who reported it stops waiting for updates and the complaint is counted as completed in the reports.\par\smallskip
+{\makeatletter
+\@beginparpenalty=10000
+\makeatother
+\noindent\textbf{Confirmation}\par\nopagebreak[4]\vspace{-6pt}\nopagebreak[4]
+\begin{enumerate}\setlength{\itemsep}{2pt}\setlength{\parsep}{0pt}\setlength{\topsep}{2pt}\setlength{\partopsep}{0pt}
+  \item \textbf{Given} a complaint is In Progress and I am the assigned staff member or a maintenance supervisor, \textbf{When} I mark it as Resolved, \textbf{Then} its status changes to Resolved and shows the date and time of resolution.
+  \item \textbf{Given} a complaint has just been marked Resolved, \textbf{When} the status changes, \textbf{Then} the person who submitted it and everyone following it receive an on-screen notification.
+  \item \textbf{Given} a complaint is Open, \textbf{When} I try to mark it as Resolved, \textbf{Then} the system rejects the action and asks me to accept the complaint first.
+  \item \textbf{Given} a complaint is In Progress and assigned to another staff member, \textbf{When} I try to mark it as Resolved and I am not a supervisor, \textbf{Then} the system rejects the action and displays ``Only the assigned staff member or a supervisor can resolve this complaint.''
+  \item \textbf{Given} a complaint is Resolved or Rejected, \textbf{When} I try to mark it as Resolved, \textbf{Then} the system rejects the action and displays ``Only In Progress complaints can be marked as Resolved.''
+  \item \textbf{Given} a supervisor marks an In Progress complaint as Resolved, \textbf{When} the status changes, \textbf{Then} the assigned staff member receives an on-screen notification.
+\end{enumerate}}
+\medskip
+ 
+\noindent\textbf{FR-14: View location history}\par\nopagebreak[4]\smallskip
+\noindent\textbf{User Story}\par\nopagebreak[4]
+\noindent As a maintenance staff member or maintenance supervisor, I want to view previous complaints from the same location, so that I can identify recurring problems and investigate their causes.\par\smallskip
+\noindent\textit{Location rule: two complaints match when building, floor, and room or area match. Shared areas (hallways, restrooms) have their own location entries.}\par\smallskip
+{\makeatletter
+\@beginparpenalty=10000
+\makeatother
+\noindent\textbf{Confirmation}\par\nopagebreak[4]\vspace{-6pt}\nopagebreak[4]
+\begin{enumerate}\setlength{\itemsep}{2pt}\setlength{\parsep}{0pt}\setlength{\topsep}{2pt}\setlength{\partopsep}{0pt}
+  \item \textbf{Given} previous complaints exist for the same location, \textbf{When} I open a complaint, \textbf{Then} the system lists them, including Rejected ones, with category, submission date, and current status (Open, In Progress, Resolved, or Rejected).
+  \item \textbf{Given} no previous complaints match the location, \textbf{When} I open a complaint, \textbf{Then} the system displays ``No complaint history available.''
+\end{enumerate}}
+\medskip
+ 
+\noindent\textbf{FR-20: Reject complaint}\par\nopagebreak[4]\smallskip
+\noindent\textbf{User Story}\par\nopagebreak[4]
+\noindent As a maintenance staff member or maintenance supervisor, I want to reject an Open or In Progress complaint that is invalid or out of scope, with a reason, so that it does not stay open and wrongly become overdue.\par\smallskip
+{\makeatletter
+\@beginparpenalty=10000
+\makeatother
+\noindent\textbf{Confirmation}\par\nopagebreak[4]\vspace{-6pt}\nopagebreak[4]
+\begin{enumerate}\setlength{\itemsep}{2pt}\setlength{\parsep}{0pt}\setlength{\topsep}{2pt}\setlength{\partopsep}{0pt}
+  \item \textbf{Given} a complaint is Open, \textbf{When} I reject it and enter a reason, \textbf{Then} its status changes to Rejected, and the reason, my name, and the date and time are saved.
+  \item \textbf{Given} a complaint is In Progress and I am the assigned staff member or a maintenance supervisor, \textbf{When} I reject it and enter a reason, \textbf{Then} its status changes to Rejected, and the reason, my name, and the date and time are saved.
+  \item \textbf{Given} a complaint is In Progress and assigned to another staff member, \textbf{When} I try to reject it and I am not a supervisor, \textbf{Then} the system does not change it and displays ``Only the assigned staff member or a supervisor can reject this complaint.''
+  \item \textbf{Given} a complaint has just been rejected, \textbf{When} the status changes, \textbf{Then} the person who submitted it and everyone following it receive an on-screen notification that shows the reason.
+  \item \textbf{Given} I am rejecting a complaint, \textbf{When} I submit without a reason, \textbf{Then} the complaint is not rejected and the system displays ``Please enter a reason.''
+  \item \textbf{Given} a complaint is Resolved or Rejected, \textbf{When} I try to reject it, \textbf{Then} the system does not change it and displays ``Only Open or In Progress complaints can be rejected.''
+  \item \textbf{Given} I am logged in as a student, a faculty member, or an administrator, \textbf{When} I try to reject a complaint, \textbf{Then} the system denies access and displays ``Only maintenance staff and supervisors can reject complaints.''
+\end{enumerate}}
+\medskip
+ 
+\subsubsection*{Maintenance Supervisor}
+
+\noindent\textbf{FR-15: Overdue escalation}\par\nopagebreak[4]\smallskip
+\noindent\textbf{User Story}\par\nopagebreak[4]
+\noindent As a maintenance supervisor, I want to be notified when a complaint stays Open for 48 hours, so that urgent problems do not get ignored.\par\smallskip
+{\makeatletter
+\@beginparpenalty=10000
+\makeatother
+\noindent\textbf{Confirmation}\par\nopagebreak[4]\vspace{-6pt}\nopagebreak[4]
+\begin{enumerate}\setlength{\itemsep}{2pt}\setlength{\parsep}{0pt}\setlength{\topsep}{2pt}\setlength{\partopsep}{0pt}
+  \item \textbf{Given} a complaint has stayed Open for 48 hours (counted from when it became Open, by submission or by reopening), \textbf{When} the 48th hour passes, \textbf{Then} every supervisor receives one notification and the complaint shows an Overdue mark.
+  \item \textbf{Given} a complaint moves to In Progress before 48 hours, \textbf{When} the 48th hour passes, \textbf{Then} no overdue notification is sent.
+  \item \textbf{Given} a complaint shows an Overdue mark, \textbf{When} a maintenance staff member accepts it, a supervisor assigns it, or a maintenance staff member or supervisor rejects it, \textbf{Then} the Overdue mark is removed.
+  \item \textbf{Given} a complaint moves to Rejected before 48 hours, \textbf{When} the 48th hour passes, \textbf{Then} no overdue notification is sent and no Overdue mark is shown.
+\end{enumerate}}
+\medskip
+ 
+\noindent\textbf{FR-16: Monitor complaints}\par\nopagebreak[4]\smallskip
+\noindent\textbf{User Story}\par\nopagebreak[4]
+\noindent As a maintenance supervisor, I want to view all complaints with their status and assigned staff member, so that I can tell overdue complaints apart from those already being worked on and see how the team's work is spread.\par\smallskip
+{\makeatletter
+\@beginparpenalty=10000
+\makeatother
+\noindent\textbf{Confirmation}\par\nopagebreak[4]\vspace{-6pt}\nopagebreak[4]
+\begin{enumerate}\setlength{\itemsep}{2pt}\setlength{\parsep}{0pt}\setlength{\topsep}{2pt}\setlength{\partopsep}{0pt}
+  \item \textbf{Given} I am logged in as a maintenance supervisor, \textbf{When} I open the complaint overview, \textbf{Then} I see each complaint's ID, category, location, status, assigned staff member, and an Overdue mark where it applies, with Safety Hazard complaints at the top.
+  \item \textbf{Given} the complaint overview is open, \textbf{When} I filter by status, assigned staff member, or Overdue, \textbf{Then} only matching complaints are shown.
+  \item \textbf{Given} the complaint overview is open, \textbf{When} I apply filters that match no complaint, \textbf{Then} the system displays ``No complaints match your filters.''
+  \item \textbf{Given} the complaint overview is open, \textbf{When} I filter by Rejected, \textbf{Then} I see each rejected complaint with its reason, the name of the staff member or supervisor who rejected it, and the date and time.
+\end{enumerate}}
+\medskip
+ 
+\noindent\textbf{FR-17: Assign complaint}\par\nopagebreak[4]\smallskip
+\noindent\textbf{User Story}\par\nopagebreak[4]
+\noindent As a maintenance supervisor, I want to assign an Open or In Progress complaint to a maintenance staff member, so that urgent or stalled work is done even when no one has accepted it or the assigned staff member is unavailable.\par\smallskip
+\noindent Selection rule: any maintenance staff member can be chosen. The system does not track staff availability; the supervisor decides.\par\smallskip
+{\makeatletter
+\@beginparpenalty=10000
+\makeatother
+\noindent\textbf{Confirmation}\par\nopagebreak[4]\vspace{-6pt}\nopagebreak[4]
+\begin{enumerate}\setlength{\itemsep}{2pt}\setlength{\parsep}{0pt}\setlength{\topsep}{2pt}\setlength{\partopsep}{0pt}
+  \item \textbf{Given} a complaint is Open, \textbf{When} I assign it to a maintenance staff member, \textbf{Then} its status changes to In Progress, the staff member is shown as assigned, any Overdue mark is removed, and the staff member receives an on-screen notification.
+  \item \textbf{Given} a complaint is In Progress and assigned to a staff member, \textbf{When} I assign it to another maintenance staff member, \textbf{Then} it stays In Progress, the new staff member is shown as assigned, and both the previous and the new staff members receive an on-screen notification.
+  \item \textbf{Given} a complaint is Resolved or Rejected, \textbf{When} I try to assign it, \textbf{Then} the system rejects the action and displays ``Only Open or In Progress complaints can be assigned.''
+  \item \textbf{Given} I am logged in as maintenance staff, a student, a faculty member, or an administrator, \textbf{When} I try to assign a complaint, \textbf{Then} the system denies access and displays ``Only supervisors can assign complaints.''
+\end{enumerate}}
+\medskip
+ 
+\subsubsection*{University Administration}
+
+\noindent\textbf{FR-18: Resolution-time report}\par\nopagebreak[4]\smallskip
+\noindent\textbf{User Story}\par\nopagebreak[4]
+\noindent As a university administrator, I want to view a summary of complaints by category and average resolution time, so that I can decide where to spend the maintenance budget.\par\smallskip
+\noindent Resolution time: the time from when a complaint was first submitted to when it was last marked Resolved. Only Resolved complaints are included in the average. Rejected complaints are never counted.\par\smallskip
+{\makeatletter
+\@beginparpenalty=10000
+\makeatother
+\noindent\textbf{Confirmation}\par\nopagebreak[4]\vspace{-6pt}\nopagebreak[4]
+\begin{enumerate}\setlength{\itemsep}{2pt}\setlength{\parsep}{0pt}\setlength{\topsep}{2pt}\setlength{\partopsep}{0pt}
+  \item \textbf{Given} complaints exist in the selected date range, \textbf{When} I generate the report, \textbf{Then} it shows, for each category, the number of complaints (Open, In Progress, and Resolved) in a column ``Complaints'' and the average resolution time in a column ``Average resolution time (Resolved only)''.
+  \item \textbf{Given} a complaint was submitted outside the date range, \textbf{When} I generate the report, \textbf{Then} it is not included.
+  \item \textbf{Given} no complaints exist in the date range, \textbf{When} I generate the report, \textbf{Then} the system displays ``No records found.''
+  \item \textbf{Given} a complaint is Rejected, \textbf{When} I generate the report, \textbf{Then} it is not counted in the report.
+\end{enumerate}}
+\medskip
+ 
+\noindent\textbf{FR-19: Complaint frequency by building}\par\nopagebreak[4]\smallskip
+\noindent\textbf{User Story}\par\nopagebreak[4]
+\noindent As a university administrator, I want to compare complaint frequency across buildings and categories, so that I can identify facilities that may require permanent repairs.\par\smallskip
+{\makeatletter
+\@beginparpenalty=10000
+\makeatother
+\noindent\textbf{Confirmation}\par\nopagebreak[4]\vspace{-6pt}\nopagebreak[4]
+\begin{enumerate}\setlength{\itemsep}{2pt}\setlength{\parsep}{0pt}\setlength{\topsep}{2pt}\setlength{\partopsep}{0pt}
+  \item \textbf{Given} complaints exist in the selected date range, \textbf{When} I generate the report, \textbf{Then} it shows complaint counts (Open, In Progress, and Resolved) grouped by building and category.
+  \item \textbf{Given} a complaint was submitted outside the date range, \textbf{When} I generate the report, \textbf{Then} it is not included.
+  \item \textbf{Given} no complaints exist in the date range, \textbf{When} I generate the report, \textbf{Then} the system displays ``No records found.''
+  \item \textbf{Given} a complaint is Rejected, \textbf{When} I generate the report, \textbf{Then} it is not counted in the report.
+\end{enumerate}}
+\medskip
+ 
+\section{Non Functional Requirements}
+Non-functional requirements are written as measurable statements, each with a verification method. The target values are proposed by the team and can be revised.
+
+\subsubsection*{Performance}
+
+\begin{description}
+  \item[NFR-01] The system shall display any page or complaint detail within 2 seconds for at least 95\% of requests with up to 200 concurrent users. \textit{Verification:} Load test. \textit{Related FR:} All.
+  \item[NFR-02] The system shall generate administrative reports within 5 seconds for datasets containing up to 10,000 complaint records. \textit{Verification:} Performance test. \textit{Related FR:} FR-18, FR-19.
+  \item[NFR-03] The system shall deliver an on-screen notification to the person who submitted a complaint, and to everyone following it, within 1 minute of the complaint being marked Resolved or Rejected, in at least 95\% of cases with up to 200 concurrent users. \textit{Verification:} Timed test. \textit{Related FR:} FR-07, FR-13, FR-20, FR-21.
+\end{description}
+
+\subsubsection*{Safety}
+
+\begin{description}
+  \item[NFR-04] The system shall deliver an on-screen notification to maintenance staff and supervisors, and an email or SMS message to supervisors, within 5 minutes of a complaint being submitted with a Safety Hazard flag, in at least 99\% of cases with up to 200 concurrent users. \textit{Verification:} Timed notification delivery test. \textit{Related FR:} FR-05, FR-08.
+\end{description}
+
+\subsubsection*{Security}
+
+\begin{description}
+  \item[NFR-05] The system shall prevent unauthorized users from accessing complaint details and uploaded photographs, including through direct URLs. \textit{Verification:} Access control test. \textit{Related FR:} FR-02, FR-06, FR-09.
+  \item[NFR-06] The system shall encrypt all data transmitted between the user's device and the server using HTTPS with TLS 1.2 or higher. \textit{Verification:} Security configuration test. \textit{Related FR:} FR-01, FR-02, FR-04.
+  \item[NFR-07] The system shall terminate inactive user sessions after 15 minutes. \textit{Verification:} Session timeout test. \textit{Related FR:} FR-02, FR-03.
+  \item[NFR-08] The system shall store passwords only as salted hashes. \textit{Verification:} Inspection of the stored data in a test database. \textit{Related FR:} FR-01, FR-02, FR-04.
+\end{description}
+
+\subsubsection*{Quality}
+
+\begin{description}
+  \item[NFR-09] The system shall display safety hazard indicators with a text label in addition to any color, so that they remain distinguishable without relying on color alone. \textit{Verification:} Accessibility and interface test. \textit{Related FR:} FR-08, FR-11, FR-16.
+  \item[NFR-10] The system shall not create an incomplete complaint record when a submission fails. \textit{Verification:} Submission failure test. \textit{Related FR:} FR-06.
+  \item[NFR-11] The system shall not create a duplicate complaint record when a user retries a failed submission. \textit{Verification:} Submission retry test. \textit{Related FR:} FR-06.
+  \item[NFR-12] The system shall ensure that administrative report totals match the complaint records that meet the selected filters. \textit{Verification:} Report results compared against the database records. \textit{Related FR:} FR-18, FR-19.
+  \item[NFR-13] The system shall create a database backup at least once every 24 hours. \textit{Verification:} Backup schedule check. \textit{Related FR:} All.
+  \item[NFR-14] The system shall restore data from the latest backup within 4 hours. \textit{Verification:} Recovery test. \textit{Related FR:} All.
+  \item[NFR-15] The system shall be available at least 99\% of the time between 8:00 am and 9:30 pm on working days. \textit{Verification:} Uptime monitoring over a test period. \textit{Related FR:} All.
+  \item[NFR-16] The system shall allow a new student or faculty member to submit a complaint within 2 minutes without training. \textit{Verification:} Usability test with new users. \textit{Related FR:} FR-06.
+  \item[NFR-17] The system shall accept a photo of up to 5 MB in JPG or PNG format and reject any other file with a clear message. \textit{Verification:} File upload test. \textit{Related FR:} FR-06.
+\end{description}
+
+\begin{appendices}
+\chapter{Glossary}
+\begin{description}
+  \item[Complaint] A report of a campus facility problem submitted by a student, faculty member, or administrator.
+  \item[Complainant] A student, faculty member, or administrator who submits a complaint.
+  \item[Open, In Progress, Resolved, Rejected] The four states of a complaint.
+  \item[Rejected] A complaint that a maintenance staff member or supervisor has closed as invalid or out of scope, with a reason (FR-20).
+  \item[Overdue] A complaint that has stayed in the Open state for 48 hours (counted from submission or from the latest reopening) without being accepted by any maintenance staff member (FR-15). It is a mark on an Open complaint, not a separate state, and it is removed when the complaint is accepted, assigned, or rejected.
+  \item[Safety Hazard] A complaint flagged by a complainant as a danger to people (FR-08).
+  \item[Follow] Choosing to receive a notification when an existing complaint is Resolved or Rejected, instead of submitting a duplicate (FR-07). A user can stop following at any time.
+  \item[Notification] An on-screen message shown to a user about a complaint (FR-05).
+  \item[IUB ID number] The identification number issued by the university. It is not an email address.
+  \item[OTP (one-time password)] A password sent to a registered email address or mobile number to verify an account or reset a password. An OTP is valid for 5 minutes, becomes invalid after 3 wrong entries, and is cancelled when a new OTP is requested, so only one OTP is valid at a time (FR-01, FR-04).
+  \item[Resolution time] The time from when a complaint was first submitted to when it was last marked Resolved (FR-18).
+  \item[Message Delivery Service] An external service that sends email or SMS messages (one-time passwords and Safety Hazard alerts).
+  \item[Maintenance Staff] Technicians who accept, resolve, and reject complaints.
+  \item[Maintenance Supervisor] Staff who monitor all complaints, receive overdue alerts, assign work, and resolve or reject complaints. A supervisor can see everything that maintenance staff can see.
+  \item[University Administration] The office that adopts and funds the system and reviews its reports.
+  \item[Functional Requirement (FR)] What the system does, written as a user story.
+  \item[Non-functional Requirement (NFR)] A measurable quality of the system, such as speed or security.
+  \item[Confirmation] The Given-When-Then conditions that show a requirement is met.
+\end{description}
+\end{appendices}
