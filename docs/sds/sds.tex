@@ -1,0 +1,843 @@
+% Software Design Specification (SDS): Campus Complaint & Maintenance System
+% Standalone document. Upload this file to a new Overleaf project and set it as the main file.
+% It uses only standard packages (geometry, array, longtable, lscape, tikz, adjustbox).
+\documentclass[11pt,a4paper]{report}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{lscape}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta}
+\usepackage{pdflscape}
+\usepackage[T1]{fontenc}
+\usepackage{graphicx}
+\usepackage{adjustbox}
+\usepackage{float}
+\newcommand{\figheight}{0.8}
+\usepackage{eso-pic}
+\newcommand{\lspagenum}{\thispagestyle{empty}\AddToShipoutPictureFG*{\put(\LenToUnit{\paperwidth-1.4cm},\LenToUnit{0.5\paperheight}){\makebox(0,0){\rotatebox{90}{\thepage}}}}}
+\renewcommand{\resizebox}[3]{\begin{adjustbox}{max width=0.95\linewidth,max height=\figheight\textheight,center}#3\end{adjustbox}}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{6pt}
+
+\begin{document}
+
+\begin{titlepage}
+\centering
+\vspace*{3cm}
+{\LARGE\bfseries Software Design Specification\par}
+\vspace{0.5cm}
+{\Large for\par}
+\vspace{0.5cm}
+{\LARGE\bfseries Campus Complaint \& Maintenance System\par}
+\vspace{2cm}
+{\large Prepared by:\par}
+\vspace{0.3cm}
+Abdullah Al Zubair (2611972)\par
+Jannatun Naim (2330097)\par
+Asiful Islam (2420197)\par
+Puja Sur (2222124)\par
+\vspace{1.5cm}
+Independent University, Bangladesh (IUB)\par
+Software Engineering\par
+\vspace{1cm}
+Dhaka, \today
+\end{titlepage}
+
+\tableofcontents
+
+\chapter{Use Case Narratives}
+Each use case has the same number as its functional requirement in the SRS (UC-12 is FR-12). Every step and alternate flow comes from the Confirmations of that functional requirement. The system-wide non-functional requirements (NFR-01, NFR-13, NFR-14, and NFR-15) apply to every use case, so each narrative lists only the specific ones.
+
+\section{UC-01 Register Account (FR-01)}
+\begin{longtable}{|>{\raggedright\arraybackslash}p{3.0cm}|>{\raggedright\arraybackslash}p{12.4cm}|}
+\hline \textbf{Field} & \textbf{Description} \\ \hline \endhead
+\textbf{Actors} & Primary: IUB community member (student, faculty member, maintenance staff, supervisor, administrator).\par\smallskip Secondary: IUB Records, Message Delivery Service. \\ \hline
+\textbf{Precondition} & The person has an IUB ID number. \\ \hline
+\textbf{Trigger} & The person chooses Register. \\ \hline
+\textbf{Main success scenario} & 1. The person enters the IUB ID number and a password and submits.\par\smallskip 2. The system looks up the IUB ID number in the IUB Records.\par\smallskip 3. The system sends a one-time password (OTP) to the registered university email or, if no email is on record, to the registered mobile number.\par\smallskip 4. The person enters the correct OTP within 5 minutes.\par\smallskip 5. The system activates the account with the role stored in the IUB Records.\par\smallskip 6. The system shows that the account is active and the person can log in. \\ \hline
+\textbf{Alternate flows} & 1a. The password is shorter than 8 characters: the system rejects it and shows ``Password must be at least 8 characters.'' The person returns to step 1.\par\smallskip 2a. The IUB ID number is not in the IUB Records: the system rejects the request and shows ``IUB ID number not found. Please contact the university administration.'' The use case ends.\par\smallskip 2b. The IUB ID number is already registered and activated: the system rejects the request and shows ``This ID is already registered.'' The use case ends.\par\smallskip 2c. The IUB ID number has no registered email or mobile number: the system rejects the request and shows ``No contact details are registered for this ID. Please contact the university administration.'' The use case ends.\par\smallskip 2d. The account is waiting for activation because an earlier registration was not completed: the system replaces the earlier password with the new one and sends a new OTP. The use case continues at step 4.\par\smallskip 3a. The person has already requested a new OTP 5 times in 15 minutes: the system rejects the request and shows ``Too many requests. Please try again in 15 minutes.'' The use case ends.\par\smallskip 3b. The person requests a new OTP while an earlier OTP is still valid: the system cancels the earlier OTP and sends the new one.\par\smallskip 4a. The OTP is wrong: the system rejects it and the person can enter the OTP again. After the 3rd wrong attempt, the system marks the OTP invalid and the person must request a new OTP. The person returns to step 3.\par\smallskip 4b. The OTP is expired: the system rejects it and lets the person request a new OTP. The person returns to step 3. \\ \hline
+\textbf{Postcondition} & The account is active with the role stored in the IUB Records, and the person can log in. \\ \hline
+\textbf{Non-functional} & NFR-06 (HTTPS, TLS 1.2 or higher), NFR-08 (passwords stored only as salted hashes). \\ \hline
+\end{longtable}
+\section{UC-02 Log In (FR-02)}
+\begin{longtable}{|>{\raggedright\arraybackslash}p{3.0cm}|>{\raggedright\arraybackslash}p{12.4cm}|}
+\hline \textbf{Field} & \textbf{Description} \\ \hline \endhead
+\textbf{Actors} & Primary: any registered user.\par\smallskip Secondary: none. \\ \hline
+\textbf{Precondition} & The person has an active account. \\ \hline
+\textbf{Trigger} & The person opens the login page and chooses Log in. \\ \hline
+\textbf{Main success scenario} & 1. The person enters the IUB ID number and password and submits.\par\smallskip 2. The system checks the IUB ID number and password.\par\smallskip 3. The system logs the person in and shows the home page for their role. \\ \hline
+\textbf{Alternate flows} & 2a. The password is wrong: the system rejects the login and shows ``Invalid ID or password'', without saying which one is wrong. The person returns to step 1.\par\smallskip 2b. The password was wrong 5 times in a row: the system locks the account for 15 minutes. The use case ends. When 15 minutes have passed, the person can log in again with the correct password.\par\smallskip 2c. The account is locked and the person enters the correct password: the system rejects the login and shows ``Your account is locked. Please try again later.'' The use case ends.\par\smallskip 3a. The person tries to open a page that their role is not allowed to use: the system denies access and shows ``You are not authorized to view this page.'' \\ \hline
+\textbf{Postcondition} & The person is logged in and sees the home page for their role. \\ \hline
+\textbf{Non-functional} & NFR-05 (unauthorized users cannot access complaint details), NFR-06 (HTTPS), NFR-07 (inactive sessions end after 15 minutes), NFR-08 (salted password hashes). \\ \hline
+\end{longtable}
+\section{UC-03 Log Out (FR-03)}
+\begin{longtable}{|>{\raggedright\arraybackslash}p{3.0cm}|>{\raggedright\arraybackslash}p{12.4cm}|}
+\hline \textbf{Field} & \textbf{Description} \\ \hline \endhead
+\textbf{Actors} & Primary: any registered user.\par\smallskip Secondary: none. \\ \hline
+\textbf{Precondition} & The person is logged in. \\ \hline
+\textbf{Trigger} & The person chooses Log out. \\ \hline
+\textbf{Main success scenario} & 1. The person chooses Log out.\par\smallskip 2. The system ends the session.\par\smallskip 3. The system shows the login page. \\ \hline
+\textbf{Alternate flows} & 1a. The person has been inactive for 15 minutes: the system has already ended the session, shows the login page, and displays ``Your session has expired. Please log in again.'' The use case ends.\par\smallskip 3a. After logging out, the person uses the browser's back button or opens the address of a protected page: the system does not show the page and asks the person to log in first. \\ \hline
+\textbf{Postcondition} & The session has ended and no protected page can be opened without logging in again. \\ \hline
+\textbf{Non-functional} & NFR-07 (inactive sessions end after 15 minutes). \\ \hline
+\end{longtable}
+\section{UC-04 Reset Password (FR-04)}
+\begin{longtable}{|>{\raggedright\arraybackslash}p{3.0cm}|>{\raggedright\arraybackslash}p{12.4cm}|}
+\hline \textbf{Field} & \textbf{Description} \\ \hline \endhead
+\textbf{Actors} & Primary: any registered user.\par\smallskip Secondary: IUB Records, Message Delivery Service. \\ \hline
+\textbf{Precondition} & The person has a registered account and has forgotten the password. \\ \hline
+\textbf{Trigger} & The person chooses Forgot password on the login page. \\ \hline
+\textbf{Main success scenario} & 1. The person enters the IUB ID number.\par\smallskip 2. The system sends a one-time password (OTP) to the registered university email or, if no email is on record, to the registered mobile number.\par\smallskip 3. The person enters the correct OTP within 5 minutes and a new password of at least 8 characters.\par\smallskip 4. The system changes the password.\par\smallskip 5. The person logs in with the new password (UC-02). \\ \hline
+\textbf{Alternate flows} & 2a. The IUB ID number is not registered: the system shows ``If this ID is registered, a one-time password has been sent.'' and sends nothing. The use case ends.\par\smallskip 2b. The person has already requested a new OTP 5 times in 15 minutes: the system rejects the request and shows ``Too many requests. Please try again in 15 minutes.'' The use case ends.\par\smallskip 2c. The account is locked: the system rejects the request and shows ``Your account is locked. Please try again later.'' The use case ends.\par\smallskip 2d. The person requests a new OTP while an earlier OTP is still valid: the system cancels the earlier OTP and sends the new one.\par\smallskip 3a. The OTP is wrong: the system rejects it and the person can enter the OTP again. After the 3rd wrong attempt, the system marks the OTP invalid and the person must request a new OTP. The person returns to step 2.\par\smallskip 3b. The OTP is expired: the system rejects it and lets the person request a new OTP. The person returns to step 2.\par\smallskip 3c. The new password is shorter than 8 characters: the system rejects it and shows ``Password must be at least 8 characters.'' The person enters a new password again.\par\smallskip 5a. The person tries to log in with the old password: the system rejects the login. \\ \hline
+\textbf{Postcondition} & The password is changed and the old password no longer works. \\ \hline
+\textbf{Non-functional} & NFR-06 (HTTPS, TLS 1.2 or higher), NFR-08 (passwords stored only as salted hashes). \\ \hline
+\end{longtable}
+\section{UC-05 View Notifications (FR-05)}
+\begin{longtable}{|>{\raggedright\arraybackslash}p{3.0cm}|>{\raggedright\arraybackslash}p{12.4cm}|}
+\hline \textbf{Field} & \textbf{Description} \\ \hline \endhead
+\textbf{Actors} & Primary: any registered user.\par\smallskip Secondary: none. \\ \hline
+\textbf{Precondition} & The person is logged in. \\ \hline
+\textbf{Trigger} & The person chooses the Notifications link. \\ \hline
+\textbf{Main success scenario} & 1. The system shows the number of unread notifications next to the Notifications link.\par\smallskip 2. The person opens Notifications.\par\smallskip 3. The system lists the notifications, newest first, with the unread ones marked.\par\smallskip 4. The person opens an unread notification.\par\smallskip 5. The system marks it as read and takes the person to the related complaint. \\ \hline
+\textbf{Alternate flows} & 3a. The person has no notifications: the system shows ``You have no notifications.'' The use case ends. \\ \hline
+\textbf{Postcondition} & The opened notification is marked as read. \\ \hline
+\textbf{Non-functional} & NFR-04 (a Safety Hazard notification reaches maintenance staff and supervisors within 5 minutes in at least 99\% of cases). \\ \hline
+\end{longtable}
+\section{UC-06 Submit Complaint (FR-06)}
+\begin{longtable}{|>{\raggedright\arraybackslash}p{3.0cm}|>{\raggedright\arraybackslash}p{12.4cm}|}
+\hline \textbf{Field} & \textbf{Description} \\ \hline \endhead
+\textbf{Actors} & Primary: Complainant (student, faculty member, administrator).\par\smallskip Secondary: none. \\ \hline
+\textbf{Precondition} & The person has an active account. \\ \hline
+\textbf{Trigger} & The person chooses Submit complaint. \\ \hline
+\textbf{Main success scenario} & 1. The person opens the complaint form.\par\smallskip 2. The person selects a category, selects a location from the list (building, floor, room or area), and adds a description.\par\smallskip 3. The system checks for similar complaints (include UC-07 Detect Duplicate Complaints).\par\smallskip 4. The person may attach a photo and may tick Safety Hazard (extend UC-08 Flag Safety Hazard).\par\smallskip 5. The person submits the complaint.\par\smallskip 6. The system saves the complaint with status Open, together with the photo if one was attached.\par\smallskip 7. The system shows a confirmation message with a unique complaint ID. \\ \hline
+\textbf{Alternate flows} & 1a. The person is not logged in: the system asks the person to log in first. The use case ends.\par\smallskip 3a. The person follows a similar complaint (UC-07): no new complaint is created. The use case ends.\par\smallskip 4a. The attached file is not a JPG or PNG image or is larger than 5 MB: the system rejects the file and shows ``Photo must be a JPG or PNG file of up to 5 MB.'' The person returns to step 4.\par\smallskip 5a. The category or the location is missing: the system does not save the complaint and highlights the missing fields. The person returns to step 2. \\ \hline
+\textbf{Postcondition} & The complaint is saved with status Open and a unique ID. A photo, if attached, is saved with it and is visible to maintenance staff and supervisors. \\ \hline
+\textbf{Non-functional} & NFR-05 (complaint details and photos are protected), NFR-10 (no incomplete record if submission fails), NFR-11 (no duplicate record if the person retries), NFR-16 (a new student or faculty member can submit within 2 minutes), NFR-17 (a photo is a JPG or PNG file of up to 5 MB). \\ \hline
+\end{longtable}
+\section{UC-07 Detect Duplicate Complaints (FR-07)}
+\begin{longtable}{|>{\raggedright\arraybackslash}p{3.0cm}|>{\raggedright\arraybackslash}p{12.4cm}|}
+\hline \textbf{Field} & \textbf{Description} \\ \hline \endhead
+\textbf{Actors} & Primary: Complainant.\par\smallskip Secondary: none. \\ \hline
+\textbf{Precondition} & The person is submitting a complaint (UC-06) and has selected a category and a location. \\ \hline
+\textbf{Trigger} & The person selects a category and a location. \\ \hline
+\textbf{Main success scenario} & 1. The system searches for Open or In Progress complaints with the same category and the same location (location rule in FR-14), whenever both are selected or either is changed.\par\smallskip 2. The system shows each matching complaint with only its category, location, and status, without the reporter's name or description.\par\smallskip 3. The person chooses to follow a matching complaint.\par\smallskip 4. The system records the follow and does not create a new complaint.\par\smallskip 5. When the complaint is marked Resolved or Rejected, the system sends an on-screen notification to the person. \\ \hline
+\textbf{Alternate flows} & 1a. No Open or In Progress complaint matches: the system accepts the complaint as normal and the person continues UC-06.\par\smallskip 2a. The person does not follow any matching complaint and continues submitting: the system accepts it as a new complaint and the person continues UC-06 at step 4.\par\smallskip 5a. Before that happens, the person chooses to stop following the complaint: the system no longer sends notifications about it. The use case ends. \\ \hline
+\textbf{Postcondition} & The person follows the complaint and no new complaint was created. \\ \hline
+\textbf{Non-functional} & NFR-03 (the notification reaches the person within 1 minute in at least 95\% of cases). \\ \hline
+\end{longtable}
+\section{UC-08 Flag Safety Hazard (FR-08)}
+\begin{longtable}{|>{\raggedright\arraybackslash}p{3.0cm}|>{\raggedright\arraybackslash}p{12.4cm}|}
+\hline \textbf{Field} & \textbf{Description} \\ \hline \endhead
+\textbf{Actors} & Primary: Complainant.\par\smallskip Secondary: Message Delivery Service. \\ \hline
+\textbf{Precondition} & The person is submitting a complaint (UC-06). This use case extends UC-06 at step 4. \\ \hline
+\textbf{Trigger} & The person ticks Safety Hazard on the complaint form. \\ \hline
+\textbf{Main success scenario} & 1. The person ticks Safety Hazard.\par\smallskip 2. The person submits the complaint (UC-06, step 5).\par\smallskip 3. The system saves the complaint as Open with a Safety Hazard flag.\par\smallskip 4. The system sends an on-screen notification to maintenance staff and supervisors.\par\smallskip 5. The system sends an email or SMS message to each maintenance supervisor at their registered email address or mobile number. \\ \hline
+\textbf{Alternate flows} & 4a. The notification (step 4) or the email or SMS message (step 5) cannot be delivered: the complaint is still saved as Open with the Safety Hazard flag and appears at the top of the staff and supervisor lists. The use case ends. \\ \hline
+\textbf{Postcondition} & The complaint is Open with a Safety Hazard flag. Maintenance staff and supervisors have been notified on screen, and each supervisor has been sent an email or SMS message. \\ \hline
+\textbf{Non-functional} & NFR-04 (staff and supervisors are notified on screen, and supervisors by email or SMS, within 5 minutes in at least 99\% of cases), NFR-09 (the Safety Hazard indicator also has a text label). \\ \hline
+\end{longtable}
+\section{UC-09 Track Complaint Status (FR-09)}
+\begin{longtable}{|>{\raggedright\arraybackslash}p{3.0cm}|>{\raggedright\arraybackslash}p{12.4cm}|}
+\hline \textbf{Field} & \textbf{Description} \\ \hline \endhead
+\textbf{Actors} & Primary: Complainant.\par\smallskip Secondary: none. \\ \hline
+\textbf{Precondition} & The person is logged in. \\ \hline
+\textbf{Trigger} & The person opens My Complaints. \\ \hline
+\textbf{Main success scenario} & 1. The person opens My Complaints.\par\smallskip 2. The system lists the person's own complaints with the status (Open, In Progress, Resolved, or Rejected), the date and time of the last status change, and the reason for a Rejected one.\par\smallskip 3. The system lists the complaints the person follows under Following, with only the category, location, status, and the date and time of the last status change.\par\smallskip 4. The person opens one of their own complaints and the system shows its category, location, description, photo (if one was attached), status, and the reason if it is Rejected.\par\smallskip 5. The person may stop following a complaint (UC-07). \\ \hline
+\textbf{Alternate flows} & 1a. The person has not submitted or followed any complaint: the system shows ``You have no complaints to show.'' The use case ends.\par\smallskip 3a. The person tries to open the details of another user's complaint: the system denies access and shows ``You are not allowed to view this complaint.'' \\ \hline
+\textbf{Postcondition} & The person has seen the current status of their own and followed complaints, and the details of any of their own complaints that they opened. \\ \hline
+\textbf{Non-functional} & NFR-05 (unauthorized users cannot access complaint details). \\ \hline
+\end{longtable}
+\section{UC-10 Reopen Complaint (FR-10)}
+\begin{longtable}{|>{\raggedright\arraybackslash}p{3.0cm}|>{\raggedright\arraybackslash}p{12.4cm}|}
+\hline \textbf{Field} & \textbf{Description} \\ \hline \endhead
+\textbf{Actors} & Primary: Complainant.\par\smallskip Secondary: none. \\ \hline
+\textbf{Precondition} & The person has a complaint with status Resolved. \\ \hline
+\textbf{Trigger} & The person chooses Reopen on that complaint. \\ \hline
+\textbf{Main success scenario} & 1. The person opens the Resolved complaint (UC-09).\par\smallskip 2. The person chooses Reopen and enters a short reason.\par\smallskip 3. The system checks that the complaint is Resolved and was marked Resolved no more than 7 days ago.\par\smallskip 4. The system changes the status to Open and clears the previous assignment.\par\smallskip 5. The system makes the reason visible to maintenance staff and supervisors. \\ \hline
+\textbf{Alternate flows} & 2a. No reason is entered: the complaint is not reopened and the system shows ``Please enter a reason.'' The person returns to step 2.\par\smallskip 3a. The complaint is Open, In Progress, or Rejected: the system rejects the action and shows ``Only Resolved complaints can be reopened.'' The use case ends.\par\smallskip 3b. The complaint was marked Resolved more than 7 days ago: the system rejects the action and asks the person to submit a new complaint. The use case ends. \\ \hline
+\textbf{Postcondition} & The complaint is Open and unassigned, and it shows the reopen reason. \\ \hline
+\textbf{Non-functional} & None specific. \\ \hline
+\end{longtable}
+\section{UC-11 Filter Complaint List (FR-11)}
+\begin{longtable}{|>{\raggedright\arraybackslash}p{3.0cm}|>{\raggedright\arraybackslash}p{12.4cm}|}
+\hline \textbf{Field} & \textbf{Description} \\ \hline \endhead
+\textbf{Actors} & Primary: Maintenance Staff, Maintenance Supervisor.\par\smallskip Secondary: none. \\ \hline
+\textbf{Precondition} & The person is logged in as maintenance staff or as a supervisor. \\ \hline
+\textbf{Trigger} & The person opens the complaint list. \\ \hline
+\textbf{Main success scenario} & 1. The person opens the complaint list.\par\smallskip 2. The system shows each complaint's ID, category, location, status, and submission date, with Safety Hazard complaints at the top.\par\smallskip 3. The person selects one or more filters (status, category, location, or Safety Hazard).\par\smallskip 4. The system shows only the complaints that match all selected filters. \\ \hline
+\textbf{Alternate flows} & 4a. No complaint matches the filters: the system shows ``No complaints match your filters.'' The use case ends. \\ \hline
+\textbf{Postcondition} & The person sees the complaints that match the chosen filters. \\ \hline
+\textbf{Non-functional} & NFR-09 (a Safety Hazard indicator also has a text label). \\ \hline
+\end{longtable}
+\section{UC-12 Accept Complaint (FR-12)}
+\begin{longtable}{|>{\raggedright\arraybackslash}p{3.0cm}|>{\raggedright\arraybackslash}p{12.4cm}|}
+\hline \textbf{Field} & \textbf{Description} \\ \hline \endhead
+\textbf{Actors} & Primary: Maintenance Staff.\par\smallskip Secondary: none. \\ \hline
+\textbf{Precondition} & The person is logged in as maintenance staff. A complaint exists. \\ \hline
+\textbf{Trigger} & The person chooses Accept on a complaint in the complaint list. \\ \hline
+\textbf{Main success scenario} & 1. The person chooses Accept on an Open complaint.\par\smallskip 2. The system checks that the complaint is still Open and unassigned.\par\smallskip 3. The system changes the status to In Progress.\par\smallskip 4. The system assigns the complaint to the person.\par\smallskip 5. If the complaint has an Overdue mark, the system removes it (FR-15 Confirmation 3).\par\smallskip 6. The system shows the updated complaint. \\ \hline
+\textbf{Alternate flows} & 2a. The complaint is In Progress and assigned to another staff member: the system rejects the action and shows ``Complaint already assigned''. The assignment stays unchanged. The use case ends.\par\smallskip 2b. The complaint is Resolved or Rejected: the system rejects the action and shows ``Only Open complaints can be accepted.'' The use case ends. \\ \hline
+\textbf{Postcondition} & The complaint is In Progress and assigned to the person, with no Overdue mark. The complainant can see that work has started. \\ \hline
+\textbf{Non-functional} & None specific. \\ \hline
+\end{longtable}
+\section{UC-13 Resolve Complaint (FR-13)}
+\begin{longtable}{|>{\raggedright\arraybackslash}p{3.0cm}|>{\raggedright\arraybackslash}p{12.4cm}|}
+\hline \textbf{Field} & \textbf{Description} \\ \hline \endhead
+\textbf{Actors} & Primary: Maintenance Staff (the assigned staff member), Maintenance Supervisor.\par\smallskip Secondary: none. \\ \hline
+\textbf{Precondition} & The person is logged in as maintenance staff or as a supervisor. A complaint exists. \\ \hline
+\textbf{Trigger} & The person chooses Mark as Resolved on a complaint. \\ \hline
+\textbf{Main success scenario} & 1. The person opens a complaint.\par\smallskip 2. The person chooses Mark as Resolved.\par\smallskip 3. The system checks that the complaint is In Progress.\par\smallskip 4. The system checks that the person is the assigned staff member or a maintenance supervisor.\par\smallskip 5. The system changes the status to Resolved and records the date and time of resolution.\par\smallskip 6. The system sends an on-screen notification to the person who submitted the complaint and to everyone following it.\par\smallskip 7. If the person is a supervisor, the system also sends an on-screen notification to the assigned staff member. \\ \hline
+\textbf{Alternate flows} & 3a. The complaint is Open: the system rejects the action and asks the person to accept the complaint first (UC-12). The use case ends.\par\smallskip 3b. The complaint is Resolved or Rejected: the system rejects the action and shows ``Only In Progress complaints can be marked as Resolved.'' The use case ends.\par\smallskip 4a. The complaint is assigned to another staff member and the person is not a supervisor: the system rejects the action and shows ``Only the assigned staff member or a supervisor can resolve this complaint.'' The use case ends. \\ \hline
+\textbf{Postcondition} & The complaint is Resolved with the date and time recorded. The submitter and the followers have been notified, and so has the assigned staff member if a supervisor resolved it. \\ \hline
+\textbf{Non-functional} & NFR-03 (the notification reaches the submitter and the followers within 1 minute in at least 95\% of cases). \\ \hline
+\end{longtable}
+\section{UC-14 View Location History (FR-14)}
+\begin{longtable}{|>{\raggedright\arraybackslash}p{3.0cm}|>{\raggedright\arraybackslash}p{12.4cm}|}
+\hline \textbf{Field} & \textbf{Description} \\ \hline \endhead
+\textbf{Actors} & Primary: Maintenance Staff, Maintenance Supervisor.\par\smallskip Secondary: none. \\ \hline
+\textbf{Precondition} & The person is logged in as maintenance staff or as a supervisor. A complaint exists. \\ \hline
+\textbf{Trigger} & The person opens a complaint. \\ \hline
+\textbf{Main success scenario} & 1. The person opens a complaint.\par\smallskip 2. The system finds the previous complaints with the same building, floor, and room or area (shared areas such as hallways and restrooms have their own location entries).\par\smallskip 3. The system lists them, including Rejected ones, with category, submission date, and current status. \\ \hline
+\textbf{Alternate flows} & 2a. There are no previous complaints for the location: the system shows ``No complaint history available.'' The use case ends. \\ \hline
+\textbf{Postcondition} & The person has seen the history of the location. \\ \hline
+\textbf{Non-functional} & None specific. \\ \hline
+\end{longtable}
+\section{UC-15 Escalate Overdue Complaint (FR-15)}
+\begin{longtable}{|>{\raggedright\arraybackslash}p{3.0cm}|>{\raggedright\arraybackslash}p{12.4cm}|}
+\hline \textbf{Field} & \textbf{Description} \\ \hline \endhead
+\textbf{Actors} & Primary: Maintenance Supervisor (every supervisor receives the notification).\par\smallskip Secondary: none. The system starts this use case. \\ \hline
+\textbf{Precondition} & A complaint has status Open. \\ \hline
+\textbf{Trigger} & The 48th hour passes while the complaint is still Open. \\ \hline
+\textbf{Main success scenario} & 1. The system finds that the complaint is still Open at the 48th hour (counted from when it became Open, by submission or by reopening).\par\smallskip 2. The system marks the complaint Overdue.\par\smallskip 3. The system sends one notification to every maintenance supervisor. \\ \hline
+\textbf{Alternate flows} & 1a. The complaint moved to In Progress before 48 hours: no overdue notification is sent. The use case ends.\par\smallskip 1b. The complaint moved to Rejected before 48 hours: no overdue notification is sent and no Overdue mark is shown. The use case ends.\par\smallskip 3a. Later, a maintenance staff member accepts the complaint (UC-12), a supervisor assigns it (UC-17), or it is rejected (UC-20): the system removes the Overdue mark. \\ \hline
+\textbf{Postcondition} & The complaint shows an Overdue mark and the supervisor has been notified. \\ \hline
+\textbf{Non-functional} & None specific. \\ \hline
+\end{longtable}
+\section{UC-16 Monitor Complaints (FR-16)}
+\begin{longtable}{|>{\raggedright\arraybackslash}p{3.0cm}|>{\raggedright\arraybackslash}p{12.4cm}|}
+\hline \textbf{Field} & \textbf{Description} \\ \hline \endhead
+\textbf{Actors} & Primary: Maintenance Supervisor.\par\smallskip Secondary: none. \\ \hline
+\textbf{Precondition} & The person is logged in as a maintenance supervisor. \\ \hline
+\textbf{Trigger} & The person opens the complaint overview. \\ \hline
+\textbf{Main success scenario} & 1. The person opens the complaint overview.\par\smallskip 2. The system shows each complaint's ID, category, location, status, and assigned staff member, with an Overdue mark where it applies and Safety Hazard complaints at the top.\par\smallskip 3. The person filters by status (including Rejected), assigned staff member, or Overdue.\par\smallskip 4. The system shows only the matching complaints.\par\smallskip 5. For Rejected complaints, the system also shows the reason, the name of the staff member or supervisor who rejected it, and the date and time. \\ \hline
+\textbf{Alternate flows} & 4a. No complaint matches the filters: the system shows ``No complaints match your filters.'' The use case ends. \\ \hline
+\textbf{Postcondition} & The person sees the current state of the complaints that match the filters. \\ \hline
+\textbf{Non-functional} & None specific. \\ \hline
+\end{longtable}
+\section{UC-17 Assign Complaint (FR-17)}
+\begin{longtable}{|>{\raggedright\arraybackslash}p{3.0cm}|>{\raggedright\arraybackslash}p{12.4cm}|}
+\hline \textbf{Field} & \textbf{Description} \\ \hline \endhead
+\textbf{Actors} & Primary: Maintenance Supervisor.\par\smallskip Secondary: none. \\ \hline
+\textbf{Precondition} & The person is logged in. A complaint exists. \\ \hline
+\textbf{Trigger} & The person chooses Assign on a complaint. \\ \hline
+\textbf{Main success scenario} & 1. The person opens an Open or In Progress complaint (UC-16).\par\smallskip 2. The person chooses Assign and selects any maintenance staff member (the system does not track availability).\par\smallskip 3. The system checks that the complaint is Open or In Progress.\par\smallskip 4. The system assigns the complaint to the selected staff member.\par\smallskip 5. If the complaint was Open, the system changes the status to In Progress and removes any Overdue mark (FR-15 Confirmation 3). If it was In Progress, the status stays In Progress.\par\smallskip 6. The system sends an on-screen notification to the new staff member, and to the previous staff member if there was one. \\ \hline
+\textbf{Alternate flows} & 2a. The person is maintenance staff, a student, a faculty member, or an administrator: the system denies access and shows ``Only supervisors can assign complaints.'' The use case ends.\par\smallskip 3a. The complaint is Resolved or Rejected: the system rejects the action and shows ``Only Open or In Progress complaints can be assigned.'' The use case ends. \\ \hline
+\textbf{Postcondition} & The complaint is In Progress and assigned to the selected staff member, with no Overdue mark. The staff members involved have been notified. \\ \hline
+\textbf{Non-functional} & None specific. \\ \hline
+\end{longtable}
+\section{UC-18 Generate Resolution-Time Report (FR-18)}
+\begin{longtable}{|>{\raggedright\arraybackslash}p{3.0cm}|>{\raggedright\arraybackslash}p{12.4cm}|}
+\hline \textbf{Field} & \textbf{Description} \\ \hline \endhead
+\textbf{Actors} & Primary: University Administration.\par\smallskip Secondary: none. \\ \hline
+\textbf{Precondition} & The person is logged in as an administrator. \\ \hline
+\textbf{Trigger} & The person chooses the resolution-time report. \\ \hline
+\textbf{Main success scenario} & 1. The person selects a date range.\par\smallskip 2. The person generates the report.\par\smallskip 3. The system includes only the complaints submitted in the date range.\par\smallskip 4. The system leaves out Rejected complaints.\par\smallskip 5. The system shows, for each category, the number of complaints (Open, In Progress, and Resolved) in a column ``Complaints'' and the average resolution time in a column ``Average resolution time (Resolved only)''. Resolution time is the time from first submission to the last time the complaint was marked Resolved. \\ \hline
+\textbf{Alternate flows} & 3a. No complaints exist in the date range: the system shows ``No records found.'' The use case ends. \\ \hline
+\textbf{Postcondition} & The person has seen the report for the selected date range. \\ \hline
+\textbf{Non-functional} & NFR-02 (a report for up to 10,000 complaint records within 5 seconds), NFR-12 (the totals match the complaint records that meet the filters). \\ \hline
+\end{longtable}
+\section{UC-19 Generate Frequency Report (FR-19)}
+\begin{longtable}{|>{\raggedright\arraybackslash}p{3.0cm}|>{\raggedright\arraybackslash}p{12.4cm}|}
+\hline \textbf{Field} & \textbf{Description} \\ \hline \endhead
+\textbf{Actors} & Primary: University Administration.\par\smallskip Secondary: none. \\ \hline
+\textbf{Precondition} & The person is logged in as an administrator. \\ \hline
+\textbf{Trigger} & The person chooses the complaint frequency report. \\ \hline
+\textbf{Main success scenario} & 1. The person selects a date range.\par\smallskip 2. The person generates the report.\par\smallskip 3. The system includes only the complaints submitted in the date range.\par\smallskip 4. The system leaves out Rejected complaints.\par\smallskip 5. The system shows the complaint counts (Open, In Progress, and Resolved) grouped by building and category. \\ \hline
+\textbf{Alternate flows} & 3a. No complaints exist in the date range: the system shows ``No records found.'' The use case ends. \\ \hline
+\textbf{Postcondition} & The person has seen the report for the selected date range. \\ \hline
+\textbf{Non-functional} & NFR-02 (a report for up to 10,000 complaint records within 5 seconds), NFR-12 (the totals match the complaint records that meet the filters). \\ \hline
+\end{longtable}
+\section{UC-20 Reject Complaint (FR-20)}
+\begin{longtable}{|>{\raggedright\arraybackslash}p{3.0cm}|>{\raggedright\arraybackslash}p{12.4cm}|}
+\hline \textbf{Field} & \textbf{Description} \\ \hline \endhead
+\textbf{Actors} & Primary: Maintenance Staff, Maintenance Supervisor.\par\smallskip Secondary: none. \\ \hline
+\textbf{Precondition} & The person is logged in. A complaint exists. \\ \hline
+\textbf{Trigger} & The person chooses Reject on a complaint. \\ \hline
+\textbf{Main success scenario} & 1. The person opens an Open or In Progress complaint.\par\smallskip 2. The person chooses Reject.\par\smallskip 3. The person enters a reason.\par\smallskip 4. The system checks that the complaint is Open or In Progress.\par\smallskip 5. If the complaint is In Progress, the system checks that the person is the assigned staff member or a supervisor.\par\smallskip 6. The system changes the status to Rejected and saves the reason, the person's name, and the date and time.\par\smallskip 7. If the complaint has an Overdue mark, the system removes it (FR-15 Confirmation 3).\par\smallskip 8. The system sends an on-screen notification showing the reason to the person who submitted the complaint and to everyone following it. \\ \hline
+\textbf{Alternate flows} & 2a. The person is a student, a faculty member, or an administrator: the system denies access and shows ``Only maintenance staff and supervisors can reject complaints.'' The use case ends.\par\smallskip 3a. No reason is entered: the complaint is not rejected and the system shows ``Please enter a reason.'' The person returns to step 3.\par\smallskip 4a. The complaint is Resolved or Rejected: the system does not change it and shows ``Only Open or In Progress complaints can be rejected.'' The use case ends.\par\smallskip 5a. The complaint is assigned to another staff member and the person is not a supervisor: the system does not change it and shows ``Only the assigned staff member or a supervisor can reject this complaint.'' The use case ends. \\ \hline
+\textbf{Postcondition} & The complaint is Rejected with the reason, the name, and the date and time saved, and has no Overdue mark. The submitter and the followers have been notified. \\ \hline
+\textbf{Non-functional} & NFR-03 (the notification reaches the submitter and the followers within 1 minute in at least 95\% of cases). \\ \hline
+\end{longtable}
+\section{UC-21 Browse Existing Complaints (FR-21)}
+\begin{longtable}{|>{\raggedright\arraybackslash}p{3.0cm}|>{\raggedright\arraybackslash}p{12.4cm}|}
+\hline \textbf{Field} & \textbf{Description} \\ \hline \endhead
+\textbf{Actors} & Primary: Complainant (student, faculty member, administrator).\par\smallskip Secondary: none. \\ \hline
+\textbf{Precondition} & The person is logged in. \\ \hline
+\textbf{Trigger} & The person opens Existing Complaints. \\ \hline
+\textbf{Main success scenario} & 1. The person opens Existing Complaints.\par\smallskip 2. The system lists each Open or In Progress complaint with its category, location, status, and date submitted, without the reporter's name, the description, or any photo.\par\smallskip 3. The person filters by building, category, or status.\par\smallskip 4. The system shows only the matching complaints.\par\smallskip 5. The person chooses to follow a complaint that matches their problem.\par\smallskip 6. The system records the follow and creates no new complaint, as described in FR-07 Confirmation 2.\par\smallskip 7. When the complaint is marked Resolved or Rejected, the system sends an on-screen notification to the person (FR-07 Confirmation 2). \\ \hline
+\textbf{Alternate flows} & 4a. No complaint matches the filters: the system shows ``No complaints match your filters.'' The use case ends. \\ \hline
+\textbf{Postcondition} & The person has browsed the existing complaints and may follow one. No new complaint was created. \\ \hline
+\textbf{Non-functional} & NFR-03 (the notification reaches the person within 1 minute in at least 95\% of cases). \\ \hline
+\end{longtable}
+
+\chapter{Use Case Diagram}
+\paragraph{Note on the three diagrams}
+The use case diagram is split into three parts by actor group, because all 21 use cases and 9 actors on one A4 page would make the text too small to read (confirmed by the course instructor).
+
+\vspace{0.5em}\noindent University Administration appears in parts 2 and 3 (as a complainant and as the report reader). Every user is an IUB Community Member; that generalization is noted in part 1 and visible in the actor hierarchy.
+
+\begin{landscape}\lspagenum\begin{figure}[H]
+\centering
+\resizebox{0.95\linewidth}{!}{%
+\definecolor{plantucolor0000}{RGB}{0,0,0}
+\definecolor{plantucolor0001}{RGB}{24,24,24}
+\definecolor{plantucolor0002}{RGB}{241,241,241}
+\definecolor{plantucolor0003}{RGB}{254,255,221}
+\begin{tikzpicture}[yscale=-1
+,pstyle0/.style={color=plantucolor0001,line width=1.0pt}
+,pstyle1/.style={color=plantucolor0001,fill=plantucolor0002,line width=0.5pt}
+,pstyle2/.style={color=plantucolor0001,line width=0.5pt}
+,pstyle3/.style={color=plantucolor0001,fill=plantucolor0003,line width=0.5pt}
+,pstyle4/.style={color=plantucolor0001,fill=plantucolor0001,line width=1.0pt}
+]
+\draw[pstyle0] (329.61pt,49.0986pt) arc (180:270:5pt) -- (334.61pt,44.0986pt) -- (644.61pt,44.0986pt) arc (270:360:5pt) -- (649.61pt,49.0986pt) -- (649.61pt,429.0986pt) arc (0:90:5pt) -- (644.61pt,434.0986pt) -- (334.61pt,434.0986pt) arc (90:180:5pt) -- (329.61pt,429.0986pt) -- cycle;
+\draw[pstyle1] (489.1113pt,396.0969pt) ellipse (99.3913pt and 22.2783pt);
+\node at (407.5242pt,386.0476pt)[below right,color=black]{UC-01 Register Account};
+\draw[pstyle1] (489.1065pt,322.0939pt) ellipse (69.3265pt and 16.2653pt);
+\node at (441.0935pt,312.3951pt)[below right,color=black]{UC-02 Log In};
+\draw[pstyle1] (489.1055pt,254.0997pt) ellipse (73.7055pt and 17.1411pt);
+\node at (436.9722pt,244.0504pt)[below right,color=black]{UC-03 Log Out};
+\draw[pstyle1] (489.106pt,181.0998pt) ellipse (93.556pt and 21.1112pt);
+\node at (413.9851pt,171.0505pt)[below right,color=black]{UC-04 Reset Password};
+\draw[pstyle1] (489.1095pt,102.1025pt) ellipse (104.3695pt and 23.2739pt);
+\node at (402.0719pt,92.0532pt)[below right,color=black]{UC-05 View Notifications};
+\draw[pstyle1] (145.8063pt,216.4986pt) ellipse (8pt and 8pt);
+\draw[pstyle2] (145.8063pt,224.4986pt) -- (145.8063pt,251.4986pt)(132.8063pt,232.4986pt) -- (158.8063pt,232.4986pt)(145.8063pt,251.4986pt) -- (132.8063pt,266.4986pt)(145.8063pt,251.4986pt) -- (158.8063pt,266.4986pt);
+\node at (90.28pt,267.9986pt)[below right,color=black]{IUB Community};
+\node at (90.28pt,284.0973pt)[below right,color=black]{Member};
+\draw[pstyle1] (752.7049pt,179.5973pt) ellipse (8pt and 8pt);
+\draw[pstyle2] (752.7049pt,187.5973pt) -- (752.7049pt,214.5973pt)(739.7049pt,195.5973pt) -- (765.7049pt,195.5973pt)(752.7049pt,214.5973pt) -- (739.7049pt,229.5973pt)(752.7049pt,214.5973pt) -- (765.7049pt,229.5973pt);
+\node at (710.22pt,231.0973pt)[below right,color=black]{IUB Records};
+\node at (723.0249pt,154.9986pt)[below right,color=black]{\textit{\guillemotleft system\guillemotright }};
+\draw[pstyle1] (752.71pt,326.5473pt) ellipse (8pt and 8pt);
+\draw[pstyle2] (752.71pt,334.5473pt) -- (752.71pt,361.5473pt)(739.71pt,342.5473pt) -- (765.71pt,342.5473pt)(752.71pt,361.5473pt) -- (739.71pt,376.5473pt)(752.71pt,361.5473pt) -- (765.71pt,376.5473pt);
+\node at (693.61pt,378.0473pt)[below right,color=black]{Message Delivery};
+\node at (693.61pt,394.1459pt)[below right,color=black]{Service};
+\node at (723.03pt,301.9486pt)[below right,color=black]{\textit{\guillemotleft system\guillemotright }};
+\draw[pstyle3] (6pt,334.8286pt) -- (6pt,479.3672pt) -- (6pt,479.3672pt) -- (285.6087pt,479.3672pt) -- (285.6087pt,479.3672pt) -- (285.6087pt,344.8286pt) -- (275.6087pt,334.8286pt) -- (149.8pt,334.8286pt) -- (145.8pt,300.5686pt) -- (141.8pt,334.8286pt) -- (6pt,334.8286pt) -- (6pt,334.8286pt);
+\draw[pstyle3] (275.6087pt,334.8286pt) -- (275.6087pt,344.8286pt) -- (285.6087pt,344.8286pt) -- (275.6087pt,334.8286pt);
+\node at (12pt,339.8286pt)[below right,color=black]{ };
+\node at (12pt,354.7774pt)[below right,color=black]{Every user is an IUB Community Member:};
+\node at (12pt,369.7261pt)[below right,color=black]{ };
+\node at (12pt,384.6748pt)[below right,color=black]{Student, Faculty Member, University};
+\node at (12pt,399.6236pt)[below right,color=black]{ };
+\node at (12pt,414.5723pt)[below right,color=black]{Administration, Maintenance Staff and};
+\node at (12pt,429.521pt)[below right,color=black]{ };
+\node at (12pt,444.4697pt)[below right,color=black]{Maintenance Supervisor.};
+\node at (12pt,459.4185pt)[below right,color=black]{ };
+\draw[pstyle0] (201.58pt,273.0686pt) ..controls (228.3pt,283.7486pt) and (260.08pt,298.6586pt) .. (285.61pt,317.0986pt) ..controls (304.73pt,330.9186pt) and (301.26pt,344.1586pt) .. (321.61pt,356.0986pt) ..controls (345.71pt,370.2386pt) and (368.7005pt,378.0977pt) .. (395.5705pt,384.0177pt);
+\draw[pstyle4] (401.43pt,385.3086pt) -- (393.5014pt,379.4659pt) -- (396.5471pt,384.2328pt) -- (391.7802pt,387.2785pt) -- (401.43pt,385.3086pt) -- cycle;
+\draw[pstyle0] (201.52pt,265.0786pt) ..controls (235.98pt,271.9886pt) and (281.39pt,281.0886pt) .. (321.61pt,289.0986pt) ..controls (359.47pt,296.6386pt) and (396.2942pt,303.9434pt) .. (428.9742pt,310.4134pt);
+\draw[pstyle4] (434.86pt,311.5786pt) -- (426.8082pt,305.9069pt) -- (429.9552pt,310.6076pt) -- (425.2545pt,313.7546pt) -- (434.86pt,311.5786pt) -- cycle;
+\draw[pstyle0] (201.64pt,254.0986pt) ..controls (259.49pt,254.0986pt) and (344.96pt,254.0986pt) .. (408.93pt,254.0986pt);
+\draw[pstyle4] (414.93pt,254.0986pt) -- (405.93pt,250.0986pt) -- (409.93pt,254.0986pt) -- (405.93pt,258.0986pt) -- (414.93pt,254.0986pt) -- cycle;
+\draw[pstyle0] (201.64pt,242.3686pt) ..controls (261pt,229.6786pt) and (349.8828pt,210.6639pt) .. (414.0128pt,196.9439pt);
+\draw[pstyle4] (419.88pt,195.6886pt) -- (410.2423pt,193.66pt) -- (414.9906pt,196.7347pt) -- (411.916pt,201.483pt) -- (419.88pt,195.6886pt) -- cycle;
+\draw[pstyle0] (201.6pt,212.2086pt) ..controls (234.78pt,188.6186pt) and (278.83pt,160.3286pt) .. (321.61pt,142.0986pt) ..controls (348pt,130.8586pt) and (372.2968pt,123.7179pt) .. (399.6268pt,117.5579pt);
+\draw[pstyle4] (405.48pt,116.2386pt) -- (395.8207pt,114.3154pt) -- (400.6024pt,117.338pt) -- (397.5798pt,122.1196pt) -- (405.48pt,116.2386pt) -- cycle;
+\draw[pstyle0] (583.04pt,388.6486pt) ..controls (609.27pt,382.8486pt) and (636.41pt,372.9186pt) .. (657.61pt,356.0986pt) ..controls (685.63pt,333.8586pt) and (675.3pt,314.8386pt) .. (693.61pt,284.0986pt) ..controls (700.9pt,271.8586pt) and (709.39pt,259.0586pt) .. (717.6pt,247.2686pt);
+\draw[pstyle0] (578.31pt,187.8386pt) ..controls (622.81pt,191.2486pt) and (674.69pt,195.2086pt) .. (710.03pt,197.9086pt);
+\draw[pstyle0] (572.16pt,383.5486pt) ..controls (611.42pt,377.5486pt) and (657.52pt,370.4986pt) .. (693.17pt,365.0486pt);
+\draw[pstyle0] (577.28pt,188.3286pt) ..controls (604.75pt,193.7686pt) and (634.04pt,203.1186pt) .. (657.61pt,219.0986pt) ..controls (666.03pt,224.8086pt) and (693.72pt,265.7886pt) .. (716.9pt,301.4586pt);
+\end{tikzpicture}
+}
+\caption{Use case diagram, part 1 of 3: account and notifications}
+\end{figure}
+\end{landscape}
+
+\begin{landscape}\lspagenum\begin{figure}[H]
+\centering
+\resizebox{0.95\linewidth}{!}{%
+\definecolor{plantucolor0000}{RGB}{0,0,0}
+\definecolor{plantucolor0001}{RGB}{24,24,24}
+\definecolor{plantucolor0002}{RGB}{241,241,241}
+\definecolor{plantucolor0003}{RGB}{254,255,221}
+\begin{tikzpicture}[yscale=-1
+,pstyle0/.style={color=plantucolor0001,line width=1.0pt}
+,pstyle1/.style={color=plantucolor0001,fill=plantucolor0002,line width=0.5pt}
+,pstyle2/.style={color=plantucolor0001,line width=0.5pt}
+,pstyle3/.style={color=plantucolor0001,fill=plantucolor0001,line width=1.0pt}
+,pstyle4/.style={color=plantucolor0001,line width=1.0pt,dash pattern=on 7.0pt off 7.0pt}
+,pstyle5/.style={color=plantucolor0001,fill=plantucolor0003,line width=0.5pt}
+]
+\draw[pstyle0] (138.9pt,377.6486pt) arc (180:270:5pt) -- (143.9pt,372.6486pt) -- (1315.13pt,372.6486pt) arc (270:360:5pt) -- (1320.13pt,377.6486pt) -- (1320.13pt,721.6486pt) arc (0:90:5pt) -- (1315.13pt,726.6486pt) -- (143.9pt,726.6486pt) arc (90:180:5pt) -- (138.9pt,721.6486pt) -- cycle;
+\draw[pstyle1] (836.877pt,675.644pt) ellipse (103.127pt and 23.0254pt);
+\node at (751.1948pt,665.5947pt)[below right,color=black]{UC-06 Submit Complaint};
+\draw[pstyle1] (1183.073pt,675.6512pt) ellipse (121.063pt and 26.6126pt);
+\node at (1100.2377pt,658.2792pt)[below right,color=black]{UC-07 Detect Duplicate};
+\node at (1141.923pt,674.3778pt)[below right,color=black]{Complaints};
+\draw[pstyle1] (275.3317pt,687.653pt) ellipse (104.7217pt and 23.3443pt);
+\node at (187.9105pt,677.6037pt)[below right,color=black]{UC-08 Flag Safety Hazard};
+\draw[pstyle1] (275.3334pt,433.6453pt) ellipse (119.2334pt and 26.2467pt);
+\node at (172.2902pt,423.596pt)[below right,color=black]{UC-09 Track Complaint Status};
+\draw[pstyle1] (275.3253pt,517.6437pt) ellipse (104.1253pt and 23.2251pt);
+\node at (188.5539pt,507.5944pt)[below right,color=black]{UC-10 Reopen Complaint};
+\draw[pstyle1] (275.3267pt,602.644pt) ellipse (120.4267pt and 26.4853pt);
+\node at (193.4008pt,585.2719pt)[below right,color=black]{UC-21 Browse Existing};
+\node at (234.1767pt,601.3705pt)[below right,color=black]{Complaints};
+\draw[pstyle1] (48.95pt,404.0986pt) ellipse (8pt and 8pt);
+\draw[pstyle2] (48.95pt,412.0986pt) -- (48.95pt,439.0986pt)(35.95pt,420.0986pt) -- (61.95pt,420.0986pt)(48.95pt,439.0986pt) -- (35.95pt,454.0986pt)(48.95pt,439.0986pt) -- (61.95pt,454.0986pt);
+\node at (6pt,455.5986pt)[below right,color=black]{Complainant};
+\draw[pstyle1] (275.3274pt,51.0986pt) ellipse (8pt and 8pt);
+\draw[pstyle2] (275.3274pt,59.0986pt) -- (275.3274pt,86.0986pt)(262.3274pt,67.0986pt) -- (288.3274pt,67.0986pt)(275.3274pt,86.0986pt) -- (262.3274pt,101.0986pt)(275.3274pt,86.0986pt) -- (288.3274pt,101.0986pt);
+\node at (249.76pt,102.5986pt)[below right,color=black]{Student};
+\draw[pstyle1] (275.3317pt,162.0986pt) ellipse (8pt and 8pt);
+\draw[pstyle2] (275.3317pt,170.0986pt) -- (275.3317pt,197.0986pt)(262.3317pt,178.0986pt) -- (288.3317pt,178.0986pt)(275.3317pt,197.0986pt) -- (262.3317pt,212.0986pt)(275.3317pt,197.0986pt) -- (288.3317pt,212.0986pt);
+\node at (220.65pt,213.5986pt)[below right,color=black]{Faculty Member};
+\draw[pstyle1] (275.3235pt,273.0586pt) ellipse (8pt and 8pt);
+\draw[pstyle2] (275.3235pt,281.0586pt) -- (275.3235pt,308.0586pt)(262.3235pt,289.0586pt) -- (288.3235pt,289.0586pt)(275.3235pt,308.0586pt) -- (262.3235pt,323.0586pt)(275.3235pt,308.0586pt) -- (288.3235pt,323.0586pt);
+\node at (225.1pt,324.5586pt)[below right,color=black]{University};
+\node at (225.1pt,340.6573pt)[below right,color=black]{Administration};
+\draw[pstyle1] (836.88pt,273.1073pt) ellipse (8pt and 8pt);
+\draw[pstyle2] (836.88pt,281.1073pt) -- (836.88pt,308.1073pt)(823.88pt,289.1073pt) -- (849.88pt,289.1073pt)(836.88pt,308.1073pt) -- (823.88pt,323.1073pt)(836.88pt,308.1073pt) -- (849.88pt,323.1073pt);
+\node at (777.78pt,324.6073pt)[below right,color=black]{Message Delivery};
+\node at (777.78pt,340.7059pt)[below right,color=black]{Service};
+\node at (807.2pt,248.5086pt)[below right,color=black]{\textit{\guillemotleft system\guillemotright }};
+\draw[pstyle0] (50.336pt,377.3463pt) ..controls (52.156pt,315.0963pt) and (64.13pt,209.5286pt) .. (130.9pt,135.6486pt) ..controls (162.1pt,101.1286pt) and (217.41pt,88.1186pt) .. (249.46pt,83.3286pt);
+\draw[pstyle0] (49.81pt,395.3386pt) -- (56.3335pt,377.5217pt) -- (44.3386pt,377.171pt) -- (49.81pt,395.3386pt) -- cycle;
+\draw[pstyle0] (61.4395pt,377.7411pt) ..controls (71.3195pt,335.9311pt) and (88.63pt,287.1686pt) .. (130.9pt,246.6486pt) ..controls (155.35pt,223.2186pt) and (190.84pt,209.4986pt) .. (220.4pt,201.6186pt);
+\draw[pstyle0] (57.3pt,395.2586pt) -- (67.2787pt,379.1209pt) -- (55.6003pt,376.3612pt) -- (57.3pt,395.2586pt) -- cycle;
+\draw[pstyle0] (107.9343pt,401.8668pt) ..controls (145.6443pt,381.1968pt) and (185.12pt,359.5586pt) .. (224.88pt,337.7586pt);
+\draw[pstyle0] (92.15pt,410.5186pt) -- (110.8183pt,407.1282pt) -- (105.0504pt,396.6053pt) -- (92.15pt,410.5186pt) -- cycle;
+\draw[pstyle0] (54.72pt,471.9686pt) ..controls (64.64pt,544.5086pt) and (89.99pt,697.4586pt) .. (130.9pt,728.6486pt) ..controls (333.91pt,883.4586pt) and (666.9645pt,754.2162pt) .. (786.7745pt,699.3662pt);
+\draw[pstyle3] (792.23pt,696.8686pt) -- (782.3817pt,696.978pt) -- (787.6838pt,698.9499pt) -- (785.7118pt,704.252pt) -- (792.23pt,696.8686pt) -- cycle;
+\draw[pstyle0] (92.15pt,433.6486pt) ..controls (110.43pt,433.6486pt) and (126.84pt,433.6486pt) .. (149.61pt,433.6486pt);
+\draw[pstyle3] (155.61pt,433.6486pt) -- (146.61pt,429.6486pt) -- (150.61pt,433.6486pt) -- (146.61pt,437.6486pt) -- (155.61pt,433.6486pt) -- cycle;
+\draw[pstyle0] (92.34pt,459.0286pt) ..controls (104.52pt,465.6686pt) and (118pt,472.4286pt) .. (130.9pt,477.6486pt) ..controls (153.42pt,486.7786pt) and (172.9488pt,493.0195pt) .. (195.9788pt,499.2595pt);
+\draw[pstyle3] (201.77pt,500.8286pt) -- (194.1293pt,494.6142pt) -- (196.944pt,499.521pt) -- (192.0371pt,502.3357pt) -- (201.77pt,500.8286pt) -- cycle;
+\draw[pstyle0] (66.1pt,472.1886pt) ..controls (79.6pt,499.9786pt) and (101.4pt,536.3686pt) .. (130.9pt,558.6486pt) ..controls (146.28pt,570.2686pt) and (159.0722pt,576.909pt) .. (177.5722pt,583.229pt);
+\draw[pstyle3] (183.25pt,585.1686pt) -- (176.0264pt,578.4739pt) -- (178.5185pt,583.5522pt) -- (173.4402pt,586.0443pt) -- (183.25pt,585.1686pt) -- cycle;
+\draw[pstyle4] (940.22pt,675.6486pt) ..controls (978.36pt,675.6486pt) and (1016.01pt,675.6486pt) .. (1055.64pt,675.6486pt);
+\draw[pstyle3] (1061.64pt,675.6486pt) -- (1052.64pt,671.6486pt) -- (1056.64pt,675.6486pt) -- (1052.64pt,679.6486pt) -- (1061.64pt,675.6486pt) -- cycle;
+\node at (971.01pt,660.6486pt)[below right,color=black]{\guillemotleft include\guillemotright };
+\draw[pstyle4] (379.94pt,685.4286pt) ..controls (480.87pt,683.2686pt) and (627.3814pt,680.1277pt) .. (727.7914pt,677.9677pt);
+\draw[pstyle3] (733.79pt,677.8386pt) -- (724.7061pt,674.0331pt) -- (728.7912pt,677.9462pt) -- (724.8781pt,682.0313pt) -- (733.79pt,677.8386pt) -- cycle;
+\node at (536.8163pt,568.5486pt)[below right,color=black]{\guillemotleft extend\guillemotright };
+\draw[pstyle5] (430.75pt,589.4974pt) -- (430.75pt,673.4974pt) -- (698.75pt,673.4974pt) -- (698.75pt,599.4974pt) -- (688.75pt,589.4974pt) -- (430.75pt,589.4974pt);
+\draw[pstyle5] (688.75pt,589.4974pt) -- (688.75pt,599.4974pt) -- (698.75pt,599.4974pt) -- (688.75pt,589.4974pt);
+\node at (436.75pt,594.4974pt)[below right,color=black]{ };
+\node at (436.75pt,609.4461pt)[below right,color=black]{condition: the person ticks Safety Hazard};
+\node at (436.75pt,624.3948pt)[below right,color=black]{ };
+\node at (436.75pt,639.3436pt)[below right,color=black]{extension point: step 4 of UC-06};
+\node at (436.75pt,654.2923pt)[below right,color=black]{ };
+\draw[pstyle0] (354.8pt,672.0886pt) ..controls (369.85pt,666.1486pt) and (384.43pt,657.9586pt) .. (395.75pt,646.6486pt) ..controls (424.69pt,617.7486pt) and (400.31pt,591.6686pt) .. (425.75pt,559.6486pt) ..controls (521.17pt,439.5986pt) and (688.97pt,360.1086pt) .. (777.47pt,324.3586pt);
+\end{tikzpicture}
+}
+\caption{Use case diagram, part 2 of 3: complainants}
+\end{figure}
+\end{landscape}
+
+\begin{figure}[H]
+\centering
+\resizebox{0.95\linewidth}{!}{%
+\definecolor{plantucolor0000}{RGB}{0,0,0}
+\definecolor{plantucolor0001}{RGB}{24,24,24}
+\definecolor{plantucolor0002}{RGB}{241,241,241}
+\begin{tikzpicture}[yscale=-1
+,pstyle0/.style={color=plantucolor0001,line width=1.0pt}
+,pstyle1/.style={color=plantucolor0001,fill=plantucolor0002,line width=0.5pt}
+,pstyle2/.style={color=plantucolor0001,line width=0.5pt}
+,pstyle3/.style={color=plantucolor0001,fill=plantucolor0001,line width=1.0pt}
+]
+\draw[pstyle0] (150.45pt,49.0986pt) arc (180:270:5pt) -- (155.45pt,44.0986pt) -- (469.06pt,44.0986pt) arc (270:360:5pt) -- (474.06pt,49.0986pt) -- (474.06pt,911.0986pt) arc (0:90:5pt) -- (469.06pt,916.0986pt) -- (155.45pt,916.0986pt) arc (90:180:5pt) -- (150.45pt,911.0986pt) -- cycle;
+\draw[pstyle1] (312.2496pt,185.0986pt) ellipse (111.5996pt and 24.7199pt);
+\node at (217.3829pt,175.0492pt)[below right,color=black]{UC-11 Filter Complaint List};
+\draw[pstyle1] (312.2527pt,102.0952pt) ellipse (102.1827pt and 22.8365pt);
+\node at (227.6027pt,92.0459pt)[below right,color=black]{UC-12 Accept Complaint};
+\draw[pstyle1] (312.2549pt,434.0976pt) ellipse (105.2449pt and 23.449pt);
+\node at (224.2643pt,424.0483pt)[below right,color=black]{UC-13 Resolve Complaint};
+\draw[pstyle1] (312.2486pt,350.0984pt) ellipse (116.5486pt and 25.7097pt);
+\node at (212.0719pt,340.049pt)[below right,color=black]{UC-14 View Location History};
+\draw[pstyle1] (312.2497pt,519.0986pt) ellipse (122.4497pt and 26.8899pt);
+\node at (227.4497pt,501.7265pt)[below right,color=black]{UC-15 Escalate Overdue};
+\node at (274.0869pt,517.8251pt)[below right,color=black]{Complaint};
+\draw[pstyle1] (312.2481pt,686.0943pt) ellipse (108.9281pt and 24.1856pt);
+\node at (220.2635pt,676.0449pt)[below right,color=black]{UC-16 Monitor Complaints};
+\draw[pstyle1] (312.2535pt,604.1033pt) ellipse (101.6235pt and 22.7247pt);
+\node at (228.2157pt,594.054pt)[below right,color=black]{UC-17 Assign Complaint};
+\draw[pstyle1] (312.2476pt,777.1002pt) ellipse (145.8076pt and 31.5615pt);
+\node at (200.2863pt,759.0015pt)[below right,color=black]{UC-18 Generate Resolution-Time};
+\node at (289.7107pt,775.1002pt)[below right,color=black]{Report};
+\draw[pstyle1] (312.2454pt,872.1017pt) ellipse (128.7154pt and 28.1431pt);
+\node at (218.826pt,854.7296pt)[below right,color=black]{UC-19 Generate Frequency};
+\node at (286.7085pt,870.8283pt)[below right,color=black]{Report};
+\draw[pstyle1] (312.2516pt,267.099pt) ellipse (100.3516pt and 22.4703pt);
+\node at (229.6088pt,257.0496pt)[below right,color=black]{UC-20 Reject Complaint};
+\draw[pstyle1] (56.22pt,229.4986pt) ellipse (8pt and 8pt);
+\draw[pstyle2] (56.22pt,237.4986pt) -- (56.22pt,264.4986pt)(43.22pt,245.4986pt) -- (69.22pt,245.4986pt)(56.22pt,264.4986pt) -- (43.22pt,279.4986pt)(56.22pt,264.4986pt) -- (69.22pt,279.4986pt);
+\node at (13.62pt,280.9986pt)[below right,color=black]{Maintenance};
+\node at (13.62pt,297.0973pt)[below right,color=black]{Staff};
+\draw[pstyle1] (56.22pt,396.4986pt) ellipse (8pt and 8pt);
+\draw[pstyle2] (56.22pt,404.4986pt) -- (56.22pt,431.4986pt)(43.22pt,412.4986pt) -- (69.22pt,412.4986pt)(56.22pt,431.4986pt) -- (43.22pt,446.4986pt)(56.22pt,431.4986pt) -- (69.22pt,446.4986pt);
+\node at (13.62pt,447.9986pt)[below right,color=black]{Maintenance};
+\node at (13.62pt,464.0973pt)[below right,color=black]{Supervisor};
+\draw[pstyle1] (56.2235pt,786.4986pt) ellipse (8pt and 8pt);
+\draw[pstyle2] (56.2235pt,794.4986pt) -- (56.2235pt,821.4986pt)(43.2235pt,802.4986pt) -- (69.2235pt,802.4986pt)(56.2235pt,821.4986pt) -- (43.2235pt,836.4986pt)(56.2235pt,821.4986pt) -- (69.2235pt,836.4986pt);
+\node at (6pt,837.9986pt)[below right,color=black]{University};
+\node at (6pt,854.0973pt)[below right,color=black]{Administration};
+\draw[pstyle0] (99.02pt,245.4986pt) ..controls (112.63pt,238.9986pt) and (127.97pt,232.2386pt) .. (142.45pt,227.0986pt) ..controls (170.34pt,217.1886pt) and (195.7745pt,210.1139pt) .. (223.7545pt,203.4239pt);
+\draw[pstyle3] (229.59pt,202.0286pt) -- (219.9065pt,200.2312pt) -- (224.7271pt,203.1914pt) -- (221.7669pt,208.0119pt) -- (229.59pt,202.0286pt) -- cycle;
+\draw[pstyle0] (78.52pt,220.5586pt) ..controls (92.95pt,194.0486pt) and (114.49pt,162.3686pt) .. (142.45pt,143.0986pt) ..controls (165.04pt,127.5286pt) and (187.0583pt,119.1643pt) .. (213.5883pt,113.1543pt);
+\draw[pstyle3] (219.44pt,111.8286pt) -- (209.7787pt,109.9159pt) -- (214.5636pt,112.9333pt) -- (211.5462pt,117.7182pt) -- (219.44pt,111.8286pt) -- cycle;
+\draw[pstyle0] (77.85pt,313.4586pt) ..controls (92.22pt,340.5786pt) and (113.93pt,373.2886pt) .. (142.45pt,393.0986pt) ..controls (164.24pt,408.2386pt) and (185.1593pt,416.4453pt) .. (210.8893pt,422.4953pt);
+\draw[pstyle3] (216.73pt,423.8686pt) -- (208.8845pt,417.9148pt) -- (211.8627pt,422.7242pt) -- (207.0534pt,425.7024pt) -- (216.73pt,423.8686pt) -- cycle;
+\draw[pstyle0] (99.04pt,288.6486pt) ..controls (112.65pt,295.1486pt) and (127.98pt,301.9186pt) .. (142.45pt,307.0986pt) ..controls (169.64pt,316.8386pt) and (194.2053pt,323.8589pt) .. (221.6353pt,330.6389pt);
+\draw[pstyle3] (227.46pt,332.0786pt) -- (219.6828pt,326.0359pt) -- (222.6061pt,330.8789pt) -- (217.7631pt,333.8022pt) -- (227.46pt,332.0786pt) -- cycle;
+\draw[pstyle0] (99.17pt,267.0986pt) ..controls (129.75pt,267.0986pt) and (166.51pt,267.0986pt) .. (205.62pt,267.0986pt);
+\draw[pstyle3] (211.62pt,267.0986pt) -- (202.62pt,263.0986pt) -- (206.62pt,267.0986pt) -- (202.62pt,271.0986pt) -- (211.62pt,267.0986pt) -- cycle;
+\draw[pstyle0] (80.77pt,387.6786pt) ..controls (89.3pt,370.1486pt) and (98.73pt,349.8886pt) .. (106.45pt,331.0986pt) ..controls (125.02pt,285.8486pt) and (106.35pt,260.1086pt) .. (142.45pt,227.0986pt) ..controls (160.5pt,210.5886pt) and (178.2327pt,201.8751pt) .. (201.9627pt,195.5451pt);
+\draw[pstyle3] (207.76pt,193.9986pt) -- (198.0331pt,192.4534pt) -- (202.9289pt,195.2873pt) -- (200.095pt,200.1831pt) -- (207.76pt,193.9986pt) -- cycle;
+\draw[pstyle0] (99.17pt,434.0986pt) ..controls (128.48pt,434.0986pt) and (162.98pt,434.0986pt) .. (200.74pt,434.0986pt);
+\draw[pstyle3] (206.74pt,434.0986pt) -- (197.74pt,430.0986pt) -- (201.74pt,434.0986pt) -- (197.74pt,438.0986pt) -- (206.74pt,434.0986pt) -- cycle;
+\draw[pstyle0] (98.99pt,411.9586pt) ..controls (112.6pt,405.3086pt) and (127.94pt,398.3786pt) .. (142.45pt,393.0986pt) ..controls (169.59pt,383.2286pt) and (194.1443pt,376.1643pt) .. (221.5743pt,369.4043pt);
+\draw[pstyle3] (227.4pt,367.9686pt) -- (217.7043pt,366.2384pt) -- (222.5453pt,369.1651pt) -- (219.6186pt,374.006pt) -- (227.4pt,367.9686pt) -- cycle;
+\draw[pstyle0] (99.01pt,456.1886pt) ..controls (112.62pt,462.8386pt) and (127.96pt,469.7786pt) .. (142.45pt,475.0986pt) ..controls (168.75pt,484.7486pt) and (192.2661pt,491.6858pt) .. (219.0061pt,498.5058pt);
+\draw[pstyle3] (224.82pt,499.9886pt) -- (217.0877pt,493.8885pt) -- (219.9751pt,498.7529pt) -- (215.1106pt,501.6403pt) -- (224.82pt,499.9886pt) -- cycle;
+\draw[pstyle0] (63.61pt,480.4686pt) ..controls (72.7pt,528.4286pt) and (94pt,602.0686pt) .. (142.45pt,644.0986pt) ..controls (161.5pt,660.6186pt) and (180.2671pt,669.3522pt) .. (204.7471pt,675.6122pt);
+\draw[pstyle3] (210.56pt,677.0986pt) -- (202.8316pt,670.9936pt) -- (205.7159pt,675.8599pt) -- (200.8496pt,678.7442pt) -- (210.56pt,677.0986pt) -- cycle;
+\draw[pstyle0] (77.11pt,480.6086pt) ..controls (91.38pt,508.5586pt) and (113.24pt,542.5686pt) .. (142.45pt,563.0986pt) ..controls (164.9pt,578.8786pt) and (186.8682pt,587.2935pt) .. (213.4082pt,593.3035pt);
+\draw[pstyle3] (219.26pt,594.6286pt) -- (211.3657pt,588.7397pt) -- (214.3835pt,593.5243pt) -- (209.5988pt,596.5421pt) -- (219.26pt,594.6286pt) -- cycle;
+\draw[pstyle0] (77.56pt,387.6286pt) ..controls (91.88pt,360.2086pt) and (113.64pt,327.0686pt) .. (142.45pt,307.0986pt) ..controls (165.09pt,291.3986pt) and (187.259pt,283.0925pt) .. (213.919pt,277.2525pt);
+\draw[pstyle3] (219.78pt,275.9686pt) -- (210.1325pt,273.9871pt) -- (214.8958pt,277.0385pt) -- (211.8444pt,281.8018pt) -- (219.78pt,275.9686pt) -- cycle;
+\draw[pstyle0] (106.81pt,814.9286pt) ..controls (133.52pt,809.9786pt) and (161.72pt,804.7597pt) .. (194.38pt,798.7197pt);
+\draw[pstyle3] (200.28pt,797.6286pt) -- (190.7027pt,795.332pt) -- (195.3634pt,798.5379pt) -- (192.1575pt,803.1986pt) -- (200.28pt,797.6286pt) -- cycle;
+\draw[pstyle0] (106.81pt,833.4686pt) ..controls (137.2pt,839.2086pt) and (171.2643pt,845.6447pt) .. (207.7843pt,852.5447pt);
+\draw[pstyle3] (213.68pt,853.6586pt) -- (205.5791pt,848.0573pt) -- (208.7669pt,852.7304pt) -- (204.0938pt,855.9182pt) -- (213.68pt,853.6586pt) -- cycle;
+\end{tikzpicture}
+}
+\caption{Use case diagram, part 3 of 3: maintenance and administration}
+\end{figure}
+
+
+
+
+\chapter{State Diagrams}
+\section{Complaint state diagram}
+A complaint is Open when it is submitted and ends as Resolved or Rejected. Overdue is a mark on an Open complaint, not a state. It is added after 48 hours (FR-15) and removed when the complaint is accepted, assigned, or rejected.
+
+\begin{landscape}\lspagenum
+\begin{figure}[H]
+\centering
+\resizebox{0.95\linewidth}{!}{%
+\definecolor{plantucolor0000}{RGB}{0,0,0}
+\definecolor{plantucolor0001}{RGB}{241,241,241}
+\definecolor{plantucolor0002}{RGB}{24,24,24}
+\definecolor{plantucolor0003}{RGB}{34,34,34}
+\definecolor{plantucolor0004}{RGB}{254,255,221}
+\begin{tikzpicture}[yscale=-1
+,pstyle0/.style={color=plantucolor0002,fill=plantucolor0001,line width=0.5pt}
+,pstyle1/.style={color=plantucolor0002,line width=0.5pt}
+,pstyle2/.style={color=plantucolor0003,fill=plantucolor0003,line width=1.0pt}
+,pstyle4/.style={color=plantucolor0002,fill=plantucolor0004,line width=0.5pt}
+,pstyle5/.style={color=plantucolor0002,line width=1.0pt}
+,pstyle6/.style={color=plantucolor0002,fill=plantucolor0002,line width=1.0pt}
+]
+\draw[pstyle0] (352pt,312.4473pt) arc (180:270:25pt) -- (377pt,287.4473pt) -- (437.879pt,287.4473pt) arc (270:360:25pt) -- (462.879pt,312.4473pt) -- (462.879pt,312.4473pt) arc (0:90:25pt) -- (437.879pt,337.4473pt) -- (377pt,337.4473pt) arc (90:180:25pt) -- (352pt,312.4473pt) -- cycle;
+\draw[pstyle1] (352pt,313.7441pt) -- (462.879pt,313.7441pt);
+\node at (362pt,292.4473pt)[below right,color=black]{In Progress};
+\draw[pstyle2] (407.5pt,53.4473pt) ellipse (10pt and 10pt);
+\draw[pstyle0] (376.5pt,167.9473pt) arc (180:270:25pt) -- (401.5pt,142.9473pt) -- (413.7316pt,142.9473pt) arc (270:360:25pt) -- (438.7316pt,167.9473pt) -- (438.7316pt,167.9473pt) arc (0:90:25pt) -- (413.7316pt,192.9473pt) -- (401.5pt,192.9473pt) arc (90:180:25pt) -- (376.5pt,167.9473pt) -- cycle;
+\draw[pstyle1] (376.5pt,169.2441pt) -- (438.7316pt,169.2441pt);
+\node at (386.5pt,147.9473pt)[below right,color=black]{Open};
+\draw[pstyle0] (7pt,439.4473pt) arc (180:270:25pt) -- (32pt,414.4473pt) -- (72.6476pt,414.4473pt) arc (270:360:25pt) -- (97.6476pt,439.4473pt) -- (97.6476pt,439.4473pt) arc (0:90:25pt) -- (72.6476pt,464.4473pt) -- (32pt,464.4473pt) arc (90:180:25pt) -- (7pt,439.4473pt) -- cycle;
+\draw[pstyle1] (7pt,440.7441pt) -- (97.6476pt,440.7441pt);
+\node at (17pt,419.4473pt)[below right,color=black]{Resolved};
+\draw[pstyle0] (391pt,439.4473pt) arc (180:270:25pt) -- (416pt,414.4473pt) -- (454.9806pt,414.4473pt) arc (270:360:25pt) -- (479.9806pt,439.4473pt) -- (479.9806pt,439.4473pt) arc (0:90:25pt) -- (454.9806pt,464.4473pt) -- (416pt,464.4473pt) arc (90:180:25pt) -- (391pt,439.4473pt) -- cycle;
+\draw[pstyle1] (391pt,440.7441pt) -- (479.9806pt,440.7441pt);
+\node at (401pt,419.4473pt)[below right,color=black]{Rejected};
+\draw[color=plantucolor0003,line width=1.0pt] (243.5pt,552.4473pt) ellipse (11pt and 11pt);
+\draw[pstyle2] (243.5pt,552.4473pt) ellipse (6pt and 6pt);
+\draw[pstyle4] (474pt,140.4473pt) -- (474pt,163.9473pt) -- (438.85pt,167.9473pt) -- (474pt,171.9473pt) -- (474pt,195.8457pt) -- (474pt,195.8457pt) -- (769.187pt,195.8457pt) -- (769.187pt,195.8457pt) -- (769.187pt,150.4473pt) -- (759.187pt,140.4473pt) -- (474pt,140.4473pt) -- (474pt,140.4473pt);
+\draw[pstyle4] (759.187pt,140.4473pt) -- (759.187pt,150.4473pt) -- (769.187pt,150.4473pt) -- (759.187pt,140.4473pt);
+\node at (480pt,145.4473pt)[below right,color=black]{Overdue is a mark, not a state.};
+\node at (480pt,160.5801pt)[below right,color=black]{Added after 48 hours (FR-15),};
+\node at (480pt,175.7129pt)[below right,color=black]{removed on accept, assign or reject.};
+\draw[pstyle5] (407.5pt,63.6573pt) ..controls (407.5pt,80.7573pt) and (407.5pt,111.9573pt) .. (407.5pt,136.7273pt);
+\draw[pstyle6] (407.5pt,142.7273pt) -- (411.5pt,133.7273pt) -- (407.5pt,137.7273pt) -- (403.5pt,133.7273pt) -- (407.5pt,142.7273pt) -- cycle;
+\node at (408.5pt,94.4473pt)[below right,color=black]{submit (FR-06)};
+\draw[pstyle5] (407.5pt,193.1173pt) ..controls (407.5pt,219.3273pt) and (407.5pt,254.9073pt) .. (407.5pt,281.1573pt);
+\draw[pstyle6] (407.5pt,287.1573pt) -- (411.5pt,278.1573pt) -- (407.5pt,282.1573pt) -- (403.5pt,278.1573pt) -- (407.5pt,287.1573pt) -- cycle;
+\node at (429.1609pt,226.4473pt)[below right,color=black]{accept by staff (FR-12)};
+\node at (408.5pt,241.5801pt)[below right,color=black]{assign by supervisor (FR-17)};
+\draw[pstyle5] (463.18pt,300.8273pt) ..controls (482.44pt,300.6973pt) and (498pt,304.5773pt) .. (498pt,312.4473pt) ..controls (498pt,320.3173pt) and (488.4399pt,324.2378pt) .. (469.1799pt,324.1078pt);
+\draw[pstyle6] (463.18pt,324.0673pt) -- (472.1528pt,328.1279pt) -- (468.1799pt,324.101pt) -- (472.2068pt,320.1281pt) -- (463.18pt,324.0673pt) -- cycle;
+\node at (504pt,304.9473pt)[below right,color=black]{reassign by supervisor (FR-17)};
+\draw[pstyle5] (351.72pt,326.5673pt) ..controls (334.4pt,330.3873pt) and (315.21pt,334.3573pt) .. (297.5pt,337.4473pt) ..controls (247.16pt,346.2373pt) and (107.47pt,333.2473pt) .. (69.5pt,367.4473pt) ..controls (56.6pt,379.0673pt) and (52.9849pt,392.5972pt) .. (52.0849pt,408.2272pt);
+\draw[pstyle6] (51.74pt,414.2173pt) -- (56.2508pt,405.4621pt) -- (52.0274pt,409.2255pt) -- (48.264pt,405.0022pt) -- (51.74pt,414.2173pt) -- cycle;
+\node at (70.5pt,368.4473pt)[below right,color=black]{resolve [assigned staff or supervisor] (FR-13)};
+\draw[pstyle5] (41.5pt,414.3873pt) ..controls (28.6pt,382.2073pt) and (12.23pt,324.8773pt) .. (39.5pt,287.4473pt) ..controls (80.36pt,231.3673pt) and (289.3421pt,189.6246pt) .. (370.5121pt,175.2346pt);
+\draw[pstyle6] (376.42pt,174.1873pt) -- (366.8599pt,171.8197pt) -- (371.4968pt,175.0601pt) -- (368.2564pt,179.6969pt) -- (376.42pt,174.1873pt) -- cycle;
+\node at (40.5pt,304.9473pt)[below right,color=black]{reopen [within 7 days, reason] (FR-10)};
+\draw[pstyle5] (438.7pt,187.7673pt) ..controls (444.47pt,190.6773pt) and (450.56pt,193.3973pt) .. (456.5pt,195.4473pt) ..controls (531.51pt,221.3373pt) and (557.77pt,198.7573pt) .. (632.5pt,225.4473pt) ..controls (684.99pt,244.1873pt) and (696.87pt,254.0673pt) .. (741.5pt,287.4473pt) ..controls (786.94pt,321.4273pt) and (861.76pt,341.6573pt) .. (824.5pt,384.4473pt) ..controls (780.28pt,435.2273pt) and (578.7599pt,439.8342pt) .. (486.2299pt,439.2642pt);
+\draw[pstyle6] (480.23pt,439.2273pt) -- (489.2052pt,443.2826pt) -- (485.2299pt,439.2581pt) -- (489.2545pt,435.2828pt) -- (480.23pt,439.2273pt) -- cycle;
+\node at (819.5pt,304.9473pt)[below right,color=black]{reject [staff or supervisor, reason] (FR-20)};
+\draw[pstyle5] (412.9pt,337.5473pt) ..controls (417.86pt,359.6873pt) and (423.8466pt,386.4528pt) .. (428.8066pt,408.5628pt);
+\draw[pstyle6] (430.12pt,414.4173pt) -- (432.053pt,404.76pt) -- (429.0255pt,409.5385pt) -- (424.247pt,406.5111pt) -- (430.12pt,414.4173pt) -- cycle;
+\node at (424.5pt,368.4473pt)[below right,color=black]{reject [assigned staff or supervisor, reason] (FR-20)};
+\draw[pstyle5] (93.94pt,464.5373pt) ..controls (139.37pt,490.9273pt) and (203.9327pt,528.4519pt) .. (228.9627pt,543.0019pt);
+\draw[pstyle6] (234.15pt,546.0173pt) -- (228.3794pt,538.0361pt) -- (229.8273pt,543.5045pt) -- (224.3589pt,544.9524pt) -- (234.15pt,546.0173pt) -- cycle;
+\node at (172.5pt,495.4473pt)[below right,color=black]{after 7 days};
+\draw[pstyle5] (393.84pt,464.5373pt) ..controls (348.18pt,490.9273pt) and (283.254pt,528.4636pt) .. (258.094pt,543.0136pt);
+\draw[pstyle6] (252.9pt,546.0173pt) -- (262.6935pt,544.9744pt) -- (257.2283pt,543.5142pt) -- (258.6886pt,538.049pt) -- (252.9pt,546.0173pt) -- cycle;
+\end{tikzpicture}
+}
+\caption{Complaint state diagram}
+\end{figure}
+\end{landscape}
+
+\begin{longtable}{|>{\raggedright\arraybackslash}p{2.6cm}|>{\raggedright\arraybackslash}p{2.6cm}|>{\raggedright\arraybackslash}p{8.2cm}|>{\raggedright\arraybackslash}p{1.9cm}|}
+\hline \textbf{From} & \textbf{To} & \textbf{Trigger and guard} & \textbf{FR} \\ \hline \endhead
+Start & Open & A complaint is submitted. & FR-06 \\ \hline
+Open & In Progress & A maintenance staff member accepts it, or a supervisor assigns it. & FR-12, FR-17 \\ \hline
+In Progress & In Progress & A supervisor reassigns it to another maintenance staff member. & FR-17 \\ \hline
+In Progress & Resolved & The assigned staff member or a supervisor marks it Resolved. & FR-13 \\ \hline
+Resolved & Open & The complainant reopens it within 7 days and gives a reason. & FR-10 \\ \hline
+Open & Rejected & A maintenance staff member or a supervisor rejects it with a reason. & FR-20 \\ \hline
+In Progress & Rejected & The assigned staff member or a supervisor rejects it with a reason. & FR-20 \\ \hline
+Resolved & End & 7 days pass without a reopening. & FR-10 \\ \hline
+Rejected & End & The complaint stays Rejected. & FR-20 \\ \hline
+\end{longtable}
+
+\begin{landscape}\lspagenum
+\section{User account state diagram}
+Log in and log out change the session, not the account state.
+
+\begin{figure}[H]
+\renewcommand{\figheight}{0.66}
+\centering
+\resizebox{0.95\linewidth}{!}{%
+\definecolor{plantucolor0000}{RGB}{0,0,0}
+\definecolor{plantucolor0001}{RGB}{241,241,241}
+\definecolor{plantucolor0002}{RGB}{24,24,24}
+\definecolor{plantucolor0003}{RGB}{34,34,34}
+\definecolor{plantucolor0004}{RGB}{254,255,221}
+\begin{tikzpicture}[yscale=-1
+,pstyle0/.style={color=plantucolor0002,fill=plantucolor0001,line width=0.5pt}
+,pstyle1/.style={color=plantucolor0002,line width=0.5pt}
+,pstyle3/.style={color=plantucolor0002,fill=plantucolor0004,line width=0.5pt}
+,pstyle4/.style={color=plantucolor0002,line width=1.0pt}
+,pstyle5/.style={color=plantucolor0002,fill=plantucolor0002,line width=1.0pt}
+]
+\draw[pstyle0] (116.54pt,180.4473pt) arc (180:270:25pt) -- (141.54pt,155.4473pt) -- (261.0347pt,155.4473pt) arc (270:360:25pt) -- (286.0347pt,180.4473pt) -- (286.0347pt,180.4473pt) arc (0:90:25pt) -- (261.0347pt,205.4473pt) -- (141.54pt,205.4473pt) arc (90:180:25pt) -- (116.54pt,180.4473pt) -- cycle;
+\draw[pstyle1] (116.54pt,181.7441pt) -- (286.0347pt,181.7441pt);
+\node at (126.54pt,160.4473pt)[below right,color=black]{Pending Activation};
+\draw[color=plantucolor0003,fill=plantucolor0003,line width=1.0pt] (201.04pt,53.4473pt) ellipse (10pt and 10pt);
+\draw[pstyle0] (166.54pt,307.4473pt) arc (180:270:25pt) -- (191.54pt,282.4473pt) -- (210.2491pt,282.4473pt) arc (270:360:25pt) -- (235.2491pt,307.4473pt) -- (235.2491pt,307.4473pt) arc (0:90:25pt) -- (210.2491pt,332.4473pt) -- (191.54pt,332.4473pt) arc (90:180:25pt) -- (166.54pt,307.4473pt) -- cycle;
+\draw[pstyle1] (166.54pt,308.7441pt) -- (235.2491pt,308.7441pt);
+\node at (176.54pt,287.4473pt)[below right,color=black]{Active};
+\draw[pstyle0] (162.04pt,434.4473pt) arc (180:270:25pt) -- (187.04pt,409.4473pt) -- (214.88pt,409.4473pt) arc (270:360:25pt) -- (239.88pt,434.4473pt) -- (239.88pt,434.4473pt) arc (0:90:25pt) -- (214.88pt,459.4473pt) -- (187.04pt,459.4473pt) arc (90:180:25pt) -- (162.04pt,434.4473pt) -- cycle;
+\draw[pstyle1] (162.04pt,435.7441pt) -- (239.88pt,435.7441pt);
+\node at (172.04pt,414.4473pt)[below right,color=black]{Locked};
+\draw[pstyle3] (553.04pt,287.4473pt) -- (553.04pt,303.4473pt) -- (235.77pt,307.4473pt) -- (553.04pt,311.4473pt) -- (553.04pt,327.7129pt) -- (553.04pt,327.7129pt) -- (864.9543pt,327.7129pt) -- (864.9543pt,327.7129pt) -- (864.9543pt,297.4473pt) -- (854.9543pt,287.4473pt) -- (553.04pt,287.4473pt) -- (553.04pt,287.4473pt);
+\draw[pstyle3] (854.9543pt,287.4473pt) -- (854.9543pt,297.4473pt) -- (864.9543pt,297.4473pt) -- (854.9543pt,287.4473pt);
+\node at (559.04pt,292.4473pt)[below right,color=black]{Log in and log out change the session,};
+\node at (559.04pt,307.5801pt)[below right,color=black]{not the account state.};
+\draw[pstyle4] (201.04pt,63.8473pt) ..controls (201.04pt,83.0373pt) and (201.04pt,121.2673pt) .. (201.04pt,149.1173pt);
+\draw[pstyle5] (201.04pt,155.1173pt) -- (205.04pt,146.1173pt) -- (201.04pt,150.1173pt) -- (197.04pt,146.1173pt) -- (201.04pt,155.1173pt) -- cycle;
+\node at (202.04pt,94.4473pt)[below right,color=black]{register [ID in IUB Records,};
+\node at (206.3304pt,109.5801pt)[below right,color=black]{contact on record] (FR-01)};
+\draw[pstyle4] (285.62pt,174.7473pt) ..controls (305.7pt,175.1973pt) and (320.54pt,177.0973pt) .. (320.54pt,180.4473pt) ..controls (320.54pt,183.7973pt) and (311.6985pt,185.5628pt) .. (291.6185pt,186.0128pt);
+\draw[pstyle5] (285.62pt,186.1473pt) -- (294.7074pt,189.9446pt) -- (290.6187pt,186.0352pt) -- (294.5281pt,181.9466pt) -- (285.62pt,186.1473pt) -- cycle;
+\node at (344.9914pt,165.4473pt)[below right,color=black]{invalid or expired OTP,};
+\node at (326.54pt,180.5801pt)[below right,color=black]{new OTP requested (FR-01)};
+\draw[pstyle4] (285.56pt,171.2273pt) ..controls (389.04pt,166.0973pt) and (542.54pt,169.1673pt) .. (542.54pt,180.4473pt) ..controls (542.54pt,191.7273pt) and (395.0326pt,195.0943pt) .. (291.5526pt,189.9643pt);
+\draw[pstyle5] (285.56pt,189.6673pt) -- (294.3509pt,194.108pt) -- (290.5539pt,189.9148pt) -- (294.747pt,186.1178pt) -- (285.56pt,189.6673pt) -- cycle;
+\node at (631.5412pt,165.4473pt)[below right,color=black]{register again:};
+\node at (548.54pt,180.5801pt)[below right,color=black]{new OTP and new password (FR-01)};
+\draw[pstyle4] (201.04pt,205.5473pt) ..controls (201.04pt,227.6873pt) and (201.04pt,254.3073pt) .. (201.04pt,276.4173pt);
+\draw[pstyle5] (201.04pt,282.4173pt) -- (205.04pt,273.4173pt) -- (201.04pt,277.4173pt) -- (197.04pt,273.4173pt) -- (201.04pt,282.4173pt) -- cycle;
+\node at (202.04pt,236.4473pt)[below right,color=black]{correct OTP within 5 minutes (FR-01)};
+\draw[pstyle4] (235.73pt,296.2673pt) ..controls (253.99pt,294.4573pt) and (270.54pt,298.1873pt) .. (270.54pt,307.4473pt) ..controls (270.54pt,316.7073pt) and (259.9607pt,321.0291pt) .. (241.7007pt,319.2191pt);
+\draw[pstyle5] (235.73pt,318.6273pt) -- (244.2915pt,323.4955pt) -- (240.7056pt,319.1205pt) -- (245.0807pt,315.5345pt) -- (235.73pt,318.6273pt) -- cycle;
+\node at (276.54pt,299.9473pt)[below right,color=black]{password reset with OTP (FR-04)};
+\draw[pstyle4] (166.41pt,308.9273pt) ..controls (128.11pt,311.5373pt) and (67.99pt,322.2873pt) .. (39.04pt,362.4473pt) ..controls (6pt,408.2873pt) and (98.1793pt,424.3155pt) .. (155.9893pt,430.0455pt);
+\draw[pstyle5] (161.96pt,430.6373pt) -- (153.3984pt,425.7691pt) -- (156.9844pt,430.1441pt) -- (152.6093pt,433.7301pt) -- (161.96pt,430.6373pt) -- cycle;
+\node at (40.04pt,363.4473pt)[below right,color=black]{5 wrong passwords in a row (FR-02)};
+\draw[pstyle4] (240.13pt,426.4973pt) ..controls (283.14pt,416.9773pt) and (343.38pt,397.0073pt) .. (321.04pt,362.4473pt) ..controls (302.31pt,333.4773pt) and (269.7883pt,321.1934pt) .. (241.4483pt,314.9234pt);
+\draw[pstyle5] (235.59pt,313.6273pt) -- (243.5134pt,319.477pt) -- (240.4719pt,314.7074pt) -- (245.2416pt,311.6659pt) -- (235.59pt,313.6273pt) -- cycle;
+\node at (326.04pt,363.4473pt)[below right,color=black]{15 minutes pass (FR-02)};
+\draw[pstyle4] (240.25pt,423.0773pt) ..controls (258.77pt,421.7573pt) and (275.04pt,425.5473pt) .. (275.04pt,434.4473pt) ..controls (275.04pt,443.3473pt) and (264.7548pt,447.5638pt) .. (246.2348pt,446.2438pt);
+\draw[pstyle5] (240.25pt,445.8173pt) -- (248.9429pt,450.447pt) -- (245.2373pt,446.1727pt) -- (249.5116pt,442.4672pt) -- (240.25pt,445.8173pt) -- cycle;
+\node at (291.6128pt,419.4473pt)[below right,color=black]{login attempt or password};
+\node at (281.04pt,434.5801pt)[below right,color=black]{reset rejected (FR-02, FR-04)};
+\end{tikzpicture}
+}
+\caption{User account state diagram}
+\end{figure}
+\end{landscape}
+
+\begin{longtable}{|>{\raggedright\arraybackslash}p{2.6cm}|>{\raggedright\arraybackslash}p{2.6cm}|>{\raggedright\arraybackslash}p{8.2cm}|>{\raggedright\arraybackslash}p{1.9cm}|}
+\hline \textbf{From} & \textbf{To} & \textbf{Trigger and guard} & \textbf{FR} \\ \hline \endhead
+Start & Pending Activation & A person registers. The IUB ID number is in the IUB Records and has a contact on record. & FR-01 \\ \hline
+Pending Activation & Pending Activation & The OTP is invalid or expired and a new OTP is requested, or the person registers again and gets a new OTP and a new password. & FR-01 \\ \hline
+Pending Activation & Active & The correct OTP is entered within 5 minutes. & FR-01 \\ \hline
+Active & Active & The password is reset with an OTP. & FR-04 \\ \hline
+Active & Locked & The password is wrong 5 times in a row. & FR-02 \\ \hline
+Locked & Locked & A login attempt or a password reset is rejected. & FR-02, FR-04 \\ \hline
+Locked & Active & 15 minutes pass. & FR-02 \\ \hline
+\end{longtable}
+
+\section{OTP state diagram}
+An OTP is created when the system sends it and ends once it is used, expired, or invalid. Only one OTP is valid at a time: a new OTP request cancels the previous one.
+
+\begin{figure}[H]
+\centering
+\resizebox{0.95\linewidth}{!}{%
+\definecolor{plantucolor0000}{RGB}{0,0,0}
+\definecolor{plantucolor0001}{RGB}{34,34,34}
+\definecolor{plantucolor0002}{RGB}{241,241,241}
+\definecolor{plantucolor0003}{RGB}{24,24,24}
+\definecolor{plantucolor0004}{RGB}{254,255,221}
+\begin{tikzpicture}[yscale=-1
+,pstyle0/.style={color=plantucolor0001,fill=plantucolor0001,line width=1.0pt}
+,pstyle1/.style={color=plantucolor0003,fill=plantucolor0002,line width=0.5pt}
+,pstyle2/.style={color=plantucolor0003,line width=0.5pt}
+,pstyle4/.style={color=plantucolor0003,fill=plantucolor0004,line width=0.5pt}
+,pstyle5/.style={color=plantucolor0003,line width=1.0pt}
+,pstyle6/.style={color=plantucolor0003,fill=plantucolor0003,line width=1.0pt}
+]
+\draw[pstyle0] (276.18pt,53.0986pt) ellipse (10pt and 10pt);
+\draw[pstyle1] (247.84pt,196.4686pt) arc (180:270:25pt) -- (272.84pt,171.4686pt) -- (279.5239pt,171.4686pt) arc (270:360:25pt) -- (304.5239pt,196.4686pt) -- (304.5239pt,196.4686pt) arc (0:90:25pt) -- (279.5239pt,221.4686pt) -- (272.84pt,221.4686pt) arc (90:180:25pt) -- (247.84pt,196.4686pt) -- cycle;
+\draw[pstyle2] (247.84pt,197.5673pt) -- (304.5239pt,197.5673pt);
+\node at (257.84pt,176.4686pt)[below right,color=black]{Valid};
+\draw[pstyle1] (91.74pt,369.8386pt) arc (180:270:25pt) -- (116.74pt,344.8386pt) -- (119.6257pt,344.8386pt) arc (270:360:25pt) -- (144.6257pt,369.8386pt) -- (144.6257pt,369.8386pt) arc (0:90:25pt) -- (119.6257pt,394.8386pt) -- (116.74pt,394.8386pt) arc (90:180:25pt) -- (91.74pt,369.8386pt) -- cycle;
+\draw[pstyle2] (91.74pt,370.9373pt) -- (144.6257pt,370.9373pt);
+\node at (101.74pt,349.8386pt)[below right,color=black]{Used};
+\draw[pstyle1] (239.71pt,369.8386pt) arc (180:270:25pt) -- (264.71pt,344.8386pt) -- (287.6433pt,344.8386pt) arc (270:360:25pt) -- (312.6433pt,369.8386pt) -- (312.6433pt,369.8386pt) arc (0:90:25pt) -- (287.6433pt,394.8386pt) -- (264.71pt,394.8386pt) arc (90:180:25pt) -- (239.71pt,369.8386pt) -- cycle;
+\draw[pstyle2] (239.71pt,370.9373pt) -- (312.6433pt,370.9373pt);
+\node at (249.71pt,349.8386pt)[below right,color=black]{Expired};
+\draw[pstyle1] (362.43pt,369.8386pt) arc (180:270:25pt) -- (387.43pt,344.8386pt) -- (404.93pt,344.8386pt) arc (270:360:25pt) -- (429.93pt,369.8386pt) -- (429.93pt,369.8386pt) arc (0:90:25pt) -- (404.93pt,394.8386pt) -- (387.43pt,394.8386pt) arc (90:180:25pt) -- (362.43pt,369.8386pt) -- cycle;
+\draw[pstyle2] (362.43pt,370.9373pt) -- (429.93pt,370.9373pt);
+\node at (372.43pt,349.8386pt)[below right,color=black]{Invalid};
+\draw[color=plantucolor0001,line width=1.0pt] (276.18pt,466.8386pt) ellipse (11pt and 11pt);
+\draw[pstyle0] (276.18pt,466.8386pt) ellipse (6pt and 6pt);
+\draw[pstyle4] (6pt,154.0986pt) -- (6pt,238.8423pt) -- (6pt,238.8423pt) -- (212.3619pt,238.8423pt) -- (212.3619pt,238.8423pt) -- (212.3619pt,200.4686pt) -- (247.36pt,196.4686pt) -- (212.3619pt,192.4686pt) -- (212.3619pt,164.0986pt) -- (202.3619pt,154.0986pt) -- (6pt,154.0986pt) -- (6pt,154.0986pt);
+\draw[pstyle4] (202.3619pt,154.0986pt) -- (202.3619pt,164.0986pt) -- (212.3619pt,164.0986pt) -- (202.3619pt,154.0986pt);
+\node at (12pt,159.0986pt)[below right,color=black]{A new OTP request cancels};
+\node at (12pt,174.0474pt)[below right,color=black]{the previous OTP, so only};
+\node at (12pt,188.9961pt)[below right,color=black]{one OTP is valid at a time.};
+\node at (12pt,203.9448pt)[below right,color=black]{Limit: 5 requests in 15 minutes};
+\node at (12pt,218.8936pt)[below right,color=black]{(FR-01, FR-04).};
+\draw[pstyle5] (276.18pt,63.3686pt) ..controls (276.18pt,84.9986pt) and (276.18pt,133.3186pt) .. (276.18pt,165.1686pt);
+\draw[pstyle6] (276.18pt,171.1686pt) -- (280.18pt,162.1686pt) -- (276.18pt,166.1686pt) -- (272.18pt,162.1686pt) -- (276.18pt,171.1686pt) -- cycle;
+\node at (305.5918pt,94.0986pt)[below right,color=black]{OTP sent to registered};
+\node at (277.18pt,109.0474pt)[below right,color=black]{email or mobile (FR-01, FR-04)};
+\draw[pstyle5] (304.84pt,181.1486pt) ..controls (322.61pt,177.4586pt) and (339.52pt,182.5686pt) .. (339.52pt,196.4686pt) ..controls (339.52pt,210.3686pt) and (328.4847pt,216.6885pt) .. (310.7147pt,212.9985pt);
+\draw[pstyle6] (304.84pt,211.7786pt) -- (312.8388pt,217.5249pt) -- (309.7356pt,212.7952pt) -- (314.4653pt,209.692pt) -- (304.84pt,211.7786pt) -- cycle;
+\node at (374.8714pt,181.9686pt)[below right,color=black]{wrong OTP entered,};
+\node at (345.52pt,196.9174pt)[below right,color=black]{attempt 1 or 2 (FR-01, FR-04)};
+\draw[pstyle5] (254.11pt,221.5786pt) ..controls (247.05pt,228.0486pt) and (238.8pt,234.4686pt) .. (230.18pt,238.8386pt) ..controls (172.27pt,268.2286pt) and (128.12pt,218.4286pt) .. (87.18pt,268.8386pt) ..controls (69.42pt,290.7086pt) and (81.1855pt,317.7772pt) .. (95.8755pt,339.6572pt);
+\draw[pstyle6] (99.22pt,344.6386pt) -- (97.5242pt,334.9369pt) -- (96.4329pt,340.4875pt) -- (90.8823pt,339.3962pt) -- (99.22pt,344.6386pt) -- cycle;
+\node at (88.18pt,277.3386pt)[below right,color=black]{correct OTP within 5 minutes};
+\node at (129.2212pt,292.2874pt)[below right,color=black]{(FR-01, FR-04)};
+\draw[pstyle5] (274.81pt,221.7486pt) ..controls (273.64pt,245.4786pt) and (272.29pt,282.6486pt) .. (273.18pt,314.8386pt) ..controls (273.45pt,324.5086pt) and (273.6403pt,329.1488pt) .. (274.1803pt,338.3988pt);
+\draw[pstyle6] (274.53pt,344.3886pt) -- (277.9987pt,335.1708pt) -- (274.2386pt,339.3971pt) -- (270.0123pt,335.637pt) -- (274.53pt,344.3886pt) -- cycle;
+\node at (276.6654pt,277.3386pt)[below right,color=black]{5 minutes pass};
+\node at (274.18pt,292.2874pt)[below right,color=black]{(FR-01, FR-04)};
+\draw[pstyle5] (304.78pt,211.2986pt) ..controls (326.83pt,223.4286pt) and (356.31pt,243.1486pt) .. (373.18pt,268.8386pt) ..controls (388.15pt,291.6186pt) and (392.9277pt,316.9105pt) .. (394.7677pt,338.3805pt);
+\draw[pstyle6] (395.28pt,344.3586pt) -- (398.4969pt,335.05pt) -- (394.8531pt,339.3769pt) -- (390.5261pt,335.7331pt) -- (395.28pt,344.3586pt) -- cycle;
+\node at (393.7562pt,269.8386pt)[below right,color=black]{3rd wrong OTP, or};
+\node at (391.48pt,284.7874pt)[below right,color=black]{new OTP requested};
+\node at (403.4595pt,299.7361pt)[below right,color=black]{(FR-01, FR-04)};
+\draw[pstyle5] (144.98pt,386.9586pt) ..controls (181.08pt,408.6586pt) and (238.3581pt,443.0965pt) .. (261.7881pt,457.1865pt);
+\draw[pstyle6] (266.93pt,460.2786pt) -- (261.2786pt,452.2125pt) -- (262.6451pt,457.7019pt) -- (257.1558pt,459.0683pt) -- (266.93pt,460.2786pt) -- cycle;
+\draw[pstyle5] (276.18pt,395.2986pt) ..controls (276.18pt,414.8786pt) and (276.18pt,435.3286pt) .. (276.18pt,449.6386pt);
+\draw[pstyle6] (276.18pt,455.6386pt) -- (280.18pt,446.6386pt) -- (276.18pt,450.6386pt) -- (272.18pt,446.6386pt) -- (276.18pt,455.6386pt) -- cycle;
+\draw[pstyle5] (365.28pt,395.2986pt) ..controls (338.33pt,416.6386pt) and (305.7627pt,442.4124pt) .. (289.2927pt,455.4624pt);
+\draw[pstyle6] (284.59pt,459.1886pt) -- (294.1282pt,456.7345pt) -- (288.5089pt,456.0835pt) -- (289.1599pt,450.4642pt) -- (284.59pt,459.1886pt) -- cycle;
+\end{tikzpicture}
+}
+\caption{OTP state diagram}
+\end{figure}
+
+\begin{longtable}{|>{\raggedright\arraybackslash}p{2.6cm}|>{\raggedright\arraybackslash}p{2.6cm}|>{\raggedright\arraybackslash}p{8.2cm}|>{\raggedright\arraybackslash}p{1.9cm}|}
+\hline \textbf{From} & \textbf{To} & \textbf{Trigger and guard} & \textbf{FR} \\ \hline \endhead
+Start & Valid & The system sends a one-time password to the registered email or mobile number. & FR-01, FR-04 \\ \hline
+Valid & Valid & The user enters a wrong OTP (attempt 1 or 2) and the system rejects it. & FR-01, FR-04 \\ \hline
+Valid & Used & The user enters the correct OTP within 5 minutes. & FR-01, FR-04 \\ \hline
+Valid & Expired & 5 minutes pass without a correct OTP. & FR-01, FR-04 \\ \hline
+Valid & Invalid & The user enters a wrong OTP for the 3rd time, or requests a new OTP (the new request cancels this OTP). & FR-01, FR-04 \\ \hline
+Used & End & The OTP is consumed and the account is activated or the password is changed. & FR-01, FR-04 \\ \hline
+Expired & End & No further action is possible. The user may request a new OTP (limit: 5 in 15 minutes). & FR-01, FR-04 \\ \hline
+Invalid & End & No further action is possible. The user may request a new OTP (limit: 5 in 15 minutes). & FR-01, FR-04 \\ \hline
+\end{longtable}
+\section{Notification state diagram}
+A notification is created when an event occurs and stays Read after the user opens it.
+
+\begin{figure}[H]
+\centering
+\resizebox{0.95\linewidth}{!}{%
+\definecolor{plantucolor0000}{RGB}{0,0,0}
+\definecolor{plantucolor0001}{RGB}{34,34,34}
+\definecolor{plantucolor0002}{RGB}{241,241,241}
+\definecolor{plantucolor0003}{RGB}{24,24,24}
+\definecolor{plantucolor0004}{RGB}{254,255,221}
+\begin{tikzpicture}[yscale=-1
+,pstyle1/.style={color=plantucolor0003,fill=plantucolor0002,line width=0.5pt}
+,pstyle2/.style={color=plantucolor0003,line width=0.5pt}
+,pstyle3/.style={color=plantucolor0003,fill=plantucolor0004,line width=0.5pt}
+,pstyle4/.style={color=plantucolor0003,line width=1.0pt}
+,pstyle5/.style={color=plantucolor0003,fill=plantucolor0003,line width=1.0pt}
+]
+\draw[color=plantucolor0001,fill=plantucolor0001,line width=1.0pt] (40.92pt,53.0986pt) ellipse (10pt and 10pt);
+\draw[pstyle1] (7pt,196.4686pt) arc (180:270:25pt) -- (32pt,171.4686pt) -- (49.8341pt,171.4686pt) arc (270:360:25pt) -- (74.8341pt,196.4686pt) -- (74.8341pt,196.4686pt) arc (0:90:25pt) -- (49.8341pt,221.4686pt) -- (32pt,221.4686pt) arc (90:180:25pt) -- (7pt,196.4686pt) -- cycle;
+\draw[pstyle2] (7pt,197.5673pt) -- (74.8341pt,197.5673pt);
+\node at (17pt,176.4686pt)[below right,color=black]{Unread};
+\draw[pstyle1] (14.12pt,339.8386pt) arc (180:270:25pt) -- (39.12pt,314.8386pt) -- (42.72pt,314.8386pt) arc (270:360:25pt) -- (67.72pt,339.8386pt) -- (67.72pt,339.8386pt) arc (0:90:25pt) -- (42.72pt,364.8386pt) -- (39.12pt,364.8386pt) arc (90:180:25pt) -- (14.12pt,339.8386pt) -- cycle;
+\draw[pstyle2] (14.12pt,340.9373pt) -- (67.72pt,340.9373pt);
+\node at (24.12pt,319.8386pt)[below right,color=black]{Read};
+\draw[pstyle3] (109.73pt,154.0986pt) -- (109.73pt,192.4686pt) -- (75.23pt,196.4686pt) -- (109.73pt,200.4686pt) -- (109.73pt,238.8423pt) -- (109.73pt,238.8423pt) -- (338.102pt,238.8423pt) -- (338.102pt,238.8423pt) -- (338.102pt,164.0986pt) -- (328.102pt,154.0986pt) -- (109.73pt,154.0986pt) -- (109.73pt,154.0986pt);
+\draw[pstyle3] (328.102pt,154.0986pt) -- (328.102pt,164.0986pt) -- (338.102pt,164.0986pt) -- (328.102pt,154.0986pt);
+\node at (115.73pt,159.0986pt)[below right,color=black]{ };
+\node at (115.73pt,174.0474pt)[below right,color=black]{The unread count is shown next to};
+\node at (115.73pt,188.9961pt)[below right,color=black]{ };
+\node at (115.73pt,203.9448pt)[below right,color=black]{the Notifications link (FR-05).};
+\node at (115.73pt,218.8936pt)[below right,color=black]{ };
+\draw[pstyle4] (40.92pt,63.3686pt) ..controls (40.92pt,84.9986pt) and (40.92pt,133.3186pt) .. (40.92pt,165.1686pt);
+\draw[pstyle5] (40.92pt,171.1686pt) -- (44.92pt,162.1686pt) -- (40.92pt,166.1686pt) -- (36.92pt,162.1686pt) -- (40.92pt,171.1686pt) -- cycle;
+\node at (104.9179pt,94.0986pt)[below right,color=black]{an event creates it};
+\node at (41.92pt,109.0474pt)[below right,color=black]{(FR-08, FR-13, FR-15, FR-17, FR-20)};
+\draw[pstyle4] (40.92pt,221.7686pt) ..controls (40.92pt,247.6686pt) and (40.92pt,282.4286pt) .. (40.92pt,308.3786pt);
+\draw[pstyle5] (40.92pt,314.3786pt) -- (44.92pt,305.3786pt) -- (40.92pt,309.3786pt) -- (36.92pt,305.3786pt) -- (40.92pt,314.3786pt) -- cycle;
+\node at (41.92pt,269.8386pt)[below right,color=black]{the user opens it (FR-05)};
+\draw[pstyle4] (67.92pt,329.0086pt) ..controls (85.6pt,326.0786pt) and (102.72pt,329.6886pt) .. (102.72pt,339.8386pt) ..controls (102.72pt,349.9886pt) and (91.5193pt,354.5796pt) .. (73.8393pt,351.6496pt);
+\draw[pstyle5] (67.92pt,350.6686pt) -- (76.1449pt,356.0863pt) -- (72.8527pt,351.4861pt) -- (77.4529pt,348.1939pt) -- (67.92pt,350.6686pt) -- cycle;
+\node at (108.72pt,332.8386pt)[below right,color=black]{the user opens it again (FR-05)};
+\end{tikzpicture}
+}
+\caption{Notification state diagram}
+\end{figure}
+
+
+\begin{longtable}{|>{\raggedright\arraybackslash}p{2.6cm}|>{\raggedright\arraybackslash}p{2.6cm}|>{\raggedright\arraybackslash}p{8.2cm}|>{\raggedright\arraybackslash}p{1.9cm}|}
+\hline \textbf{From} & \textbf{To} & \textbf{Trigger and guard} & \textbf{FR} \\ \hline \endhead
+Start & Unread & An event triggers a notification (a complaint is submitted with a Safety Hazard flag, Resolved, Rejected, overdue, assigned, or reassigned). & FR-05, FR-08, FR-13, FR-15, FR-17, FR-20 \\ \hline
+Unread & Read & The user opens the notification (FR-05). & FR-05 \\ \hline
+Read & Read & The user opens the notification again. & FR-05 \\ \hline
+\end{longtable}
+
+
+
+\chapter{Data Flow Diagram (Level 0)}
+The Level 0 data flow diagram (context diagram) shows the whole system as one process and the data that moves between it and the six external entities. The flows come from the use case narratives in Chapter 1.
+
+\begin{landscape}\lspagenum
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\linewidth]{DfdLevel0.png}
+\caption{Data flow diagram, Level 0}
+\end{figure}
+\end{landscape}
+
+\end{document}
