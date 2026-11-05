@@ -1,0 +1,21 @@
+@startuml OtpState
+title OTP state diagram
+skinparam dpi 300
+
+[*] --> Valid : OTP sent to registered\nemail or mobile (FR-01, FR-04)
+Valid --> Valid : wrong OTP entered,\nattempt 1 or 2 (FR-01, FR-04)
+Valid --> Used : correct OTP within 5 minutes\n(FR-01, FR-04)
+Valid --> Expired : 5 minutes pass\n(FR-01, FR-04)
+Valid --> Invalid : 3rd wrong OTP, or\nnew OTP requested\n(FR-01, FR-04)
+Used --> [*]
+Expired --> [*]
+Invalid --> [*]
+
+note left of Valid
+A new OTP request cancels
+the previous OTP, so only
+one OTP is valid at a time.
+Limit: 5 requests in 15 minutes
+(FR-01, FR-04).
+end note
+@enduml

@@ -1,0 +1,80 @@
+@startuml UseCaseDiagram
+title Campus Complaint & Maintenance System: use case diagram
+left to right direction
+skinparam packageStyle rectangle
+
+actor "IUB Community\nMember" as Member
+actor "Complainant" as Complainant
+actor "Student" as Student
+actor "Faculty Member" as Faculty
+actor "University\nAdministration" as Admin
+actor "Maintenance\nStaff" as Staff
+actor "Maintenance\nSupervisor" as Supervisor
+actor "IUB Records" as Records <<system>>
+actor "Message Delivery\nService" as Messenger <<system>>
+Member <|-- Complainant
+Member <|-- Staff
+Member <|-- Supervisor
+Complainant <|-- Student
+Complainant <|-- Faculty
+Complainant <|-- Admin
+
+rectangle "Campus Complaint & Maintenance System" {
+  usecase "UC-01 Register Account" as UC01
+  usecase "UC-02 Log In" as UC02
+  usecase "UC-03 Log Out" as UC03
+  usecase "UC-04 Reset Password" as UC04
+  usecase "UC-05 View Notifications" as UC05
+  usecase "UC-06 Submit Complaint" as UC06
+  usecase "UC-07 Detect Duplicate\nComplaints" as UC07
+  usecase "UC-08 Flag Safety Hazard" as UC08
+  usecase "UC-09 Track Complaint Status" as UC09
+  usecase "UC-10 Reopen Complaint" as UC10
+  usecase "UC-11 Filter Complaint List" as UC11
+  usecase "UC-12 Accept Complaint" as UC12
+  usecase "UC-13 Resolve Complaint" as UC13
+  usecase "UC-14 View Location History" as UC14
+  usecase "UC-15 Escalate Overdue\nComplaint" as UC15
+  usecase "UC-16 Monitor Complaints" as UC16
+  usecase "UC-17 Assign Complaint" as UC17
+  usecase "UC-18 Generate Resolution-Time\nReport" as UC18
+  usecase "UC-19 Generate Frequency\nReport" as UC19
+  usecase "UC-20 Reject Complaint" as UC20
+  usecase "UC-21 Browse Existing\nComplaints" as UC21
+}
+
+Member --> UC01
+Member --> UC02
+Member --> UC03
+Member --> UC04
+Member --> UC05
+Complainant --> UC06
+Complainant --> UC09
+Complainant --> UC10
+Complainant --> UC21
+Staff --> UC11
+Staff --> UC12
+Staff --> UC13
+Staff --> UC14
+Staff --> UC20
+Supervisor --> UC11
+Supervisor --> UC13
+Supervisor --> UC14
+Supervisor --> UC15
+Supervisor --> UC16
+Supervisor --> UC17
+Supervisor --> UC20
+Admin --> UC18
+Admin --> UC19
+UC06 ..> UC07 : <<include>>
+UC08 ..> UC06 : <<extend>>
+note on link
+  condition: the person ticks Safety Hazard
+  extension point: step 4 of UC-06
+end note
+UC01 -- Records
+UC04 -- Records
+UC01 -- Messenger
+UC04 -- Messenger
+UC08 -- Messenger
+@enduml

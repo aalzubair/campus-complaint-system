@@ -1,0 +1,35 @@
+@startuml UcAccountNotifications
+title Use case diagram 1 of 3: account and notifications
+left to right direction
+skinparam dpi 300
+skinparam packageStyle rectangle
+
+actor "IUB Community\nMember" as Member
+actor "IUB Records" as Records <<system>>
+actor "Message Delivery\nService" as Messenger <<system>>
+
+rectangle "Campus Complaint & Maintenance System" {
+  usecase "UC-01 Register Account" as UC01
+  usecase "UC-02 Log In" as UC02
+  usecase "UC-03 Log Out" as UC03
+  usecase "UC-04 Reset Password" as UC04
+  usecase "UC-05 View Notifications" as UC05
+}
+
+Member --> UC01
+Member --> UC02
+Member --> UC03
+Member --> UC04
+Member --> UC05
+UC01 -- Records
+UC04 -- Records
+UC01 -- Messenger
+UC04 -- Messenger
+
+note bottom of Member
+  Every user is an IUB Community Member:
+  Student, Faculty Member, University
+  Administration, Maintenance Staff and
+  Maintenance Supervisor.
+end note
+@enduml

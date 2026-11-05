@@ -1,0 +1,39 @@
+@startuml UcComplainant
+title Use case diagram 2 of 3: complainants
+left to right direction
+skinparam packageStyle rectangle
+skinparam ranksep 10
+skinparam dpi 300
+
+actor "Complainant" as Complainant
+actor "Student" as Student
+actor "Faculty Member" as Faculty
+actor "University\nAdministration" as Admin
+actor "Message Delivery\nService" as Messenger <<system>>
+
+Complainant <|-- Student
+Complainant <|-- Faculty
+Complainant <|-- Admin
+
+rectangle "Campus Complaint & Maintenance System" {
+  usecase "UC-06 Submit Complaint" as UC06
+  usecase "UC-07 Detect Duplicate\nComplaints" as UC07
+  usecase "UC-08 Flag Safety Hazard" as UC08
+  usecase "UC-09 Track Complaint Status" as UC09
+  usecase "UC-10 Reopen Complaint" as UC10
+  usecase "UC-21 Browse Existing\nComplaints" as UC21
+}
+
+Complainant --> UC06
+Complainant --> UC09
+Complainant --> UC10
+Complainant --> UC21
+
+UC06 ..> UC07 : <<include>>
+UC08 ..> UC06 : <<extend>>
+note on link
+  condition: the person ticks Safety Hazard
+  extension point: step 4 of UC-06
+end note
+UC08 -- Messenger
+@enduml
