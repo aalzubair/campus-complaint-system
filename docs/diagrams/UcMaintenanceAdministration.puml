@@ -1,0 +1,40 @@
+@startuml UcMaintenanceAdministration
+title Use case diagram 3 of 3: maintenance and administration
+left to right direction
+skinparam packageStyle rectangle
+skinparam dpi 300
+
+actor "Maintenance\nStaff" as Staff
+actor "Maintenance\nSupervisor" as Supervisor
+actor "University\nAdministration" as Admin
+
+rectangle "Campus Complaint & Maintenance System" {
+  usecase "UC-11 Filter Complaint List" as UC11
+  usecase "UC-12 Accept Complaint" as UC12
+  usecase "UC-13 Resolve Complaint" as UC13
+  usecase "UC-14 View Location History" as UC14
+  usecase "UC-15 Escalate Overdue\nComplaint" as UC15
+  usecase "UC-16 Monitor Complaints" as UC16
+  usecase "UC-17 Assign Complaint" as UC17
+  usecase "UC-18 Generate Resolution-Time\nReport" as UC18
+  usecase "UC-19 Generate Frequency\nReport" as UC19
+  usecase "UC-20 Reject Complaint" as UC20
+}
+
+Staff --> UC11
+Staff --> UC12
+Staff --> UC13
+Staff --> UC14
+Staff --> UC20
+
+Supervisor --> UC11
+Supervisor --> UC13
+Supervisor --> UC14
+Supervisor --> UC15
+Supervisor --> UC16
+Supervisor --> UC17
+Supervisor --> UC20
+Admin --> UC18
+Admin --> UC19
+
+@enduml

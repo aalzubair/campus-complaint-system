@@ -1,0 +1,23 @@
+@startuml UserAccountState
+title User account state diagram
+state "Pending Activation" as PendingActivation
+skinparam dpi 300
+skinparam nodesep 90
+skinparam ranksep 90
+hide empty description
+
+PendingActivation : invalid or expired OTP / new OTP requested (FR-01)
+PendingActivation : register again / new OTP and new password (FR-01)
+
+[*] --> PendingActivation : register [ID in IUB Records,\ncontact on record] (FR-01)
+PendingActivation -down-> Active : correct OTP within 5 minutes (FR-01)
+Active --> Active : password reset with OTP (FR-04)
+Active -down-> Locked : 5 wrong passwords\nin a row (FR-02)
+Locked --> Locked : login attempt or password\nreset rejected (FR-02, FR-04)
+Locked -up-> Active : 15 minutes pass (FR-02)
+
+note left of Locked
+  Log in and log out change the session,
+  not the account state.
+end note
+@enduml

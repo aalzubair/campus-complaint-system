@@ -1,0 +1,22 @@
+@startuml ComplaintStateDiagram
+title Complaint state diagram
+state "In Progress" as InProgress
+skinparam dpi 300
+
+[*] --> Open : submit (FR-06)
+Open --> InProgress : accept by staff (FR-12)\nassign by supervisor (FR-17)
+InProgress --> InProgress : reassign by supervisor (FR-17)
+InProgress --> Resolved : resolve [assigned staff or supervisor] (FR-13)
+Resolved --> Open : reopen [within 7 days, reason] (FR-10)
+Open --> Rejected : reject [reason] (FR-20)
+Open --> Rejected : reject [staff or supervisor, reason] (FR-20)
+InProgress --> Rejected : reject [assigned staff or supervisor, reason] (FR-20)
+Resolved --> [*] : after 7 days
+Rejected --> [*]
+
+note right of Open
+  Overdue is a mark, not a state.
+  Added after 48 hours (FR-15),
+  removed on accept, assign or reject.
+end note
+@enduml

@@ -1,0 +1,12 @@
+@startuml NotificationState
+title Notification state diagram
+skinparam dpi 300
+
+[*] --> Unread : an event creates it\n(FR-08, FR-13, FR-15, FR-17, FR-20)
+Unread --> Read : the user opens it (FR-05)
+Read --> Read : the user opens it again (FR-05)
+note right of Unread
+  The unread count is shown next to
+  the Notifications link (FR-05).
+end note
+@enduml
